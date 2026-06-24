@@ -1,0 +1,67 @@
+﻿{
+  "name": "SC RENOVATIONS",
+  "legal_form": "SARL",
+  "capital": "A_COMPLETER",
+  "address": "A_COMPLETER",
+  "siren": "A_COMPLETER",
+  "siret": "A_COMPLETER",
+  "rcs": "A_COMPLETER",
+  "naf": "4399C",
+  "gerant": {
+    "title": "Gerant",
+    "first_name": "A_COMPLETER",
+    "last_name": "A_COMPLETER",
+    "civility": "M.",
+    "_comment": "SARL : le dirigeant est le Gerant"
+  },
+  "fiscal_year": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "is_first_year": false,
+    "_comment": "A_CONFIRMER : exercice a configurer (2025 a cloturer ou 2026 en cours ?)"
+  },
+  "tax": {
+    "regime_tva": "reel_simplifie",
+    "regime_is": "reel_simplifie",
+    "tva_rate": 0.20,
+    "tva_rates_applicables": [0.20, 0.10, 0.055],
+    "_comment": "Assujettie a la TVA. Les 3 taux du batiment s'appliquent : 20% (taux normal), 10% (travaux de renovation/amelioration logement >2 ans, art. 279-0 bis CGI), 5,5% (renovation energetique, art. 278-0 bis A CGI). tva_rate = taux par defaut (20%) ; choisir le bon taux par facture selon la nature des travaux. Attestation TVA reduite requise du client pour les taux 10% / 5,5%."
+  },
+  "banks": [
+    {
+      "id": "bank-1",
+      "name": "A_COMPLETER",
+      "account": "5121",
+      "fec_account": "51211"
+    }
+  ],
+  "qonto": {
+    "enabled": false
+  },
+  "stripe_accounts": [],
+  "city": "A_COMPLETER",
+  "invoicing": {
+    "prefix": "F",
+    "separator": "-",
+    "year_format": "YYYY",
+    "next_numbers": {
+      "2025": 1,
+      "2026": 1
+    },
+    "avoir_prefix": "AV"
+  },
+  "payment": {
+    "default_terms": "net_30",
+    "default_terms_label": "30 jours date de facture",
+    "methods": ["virement"],
+    "bank_details": {
+      "iban": "",
+      "bic": ""
+    },
+    "late_penalty_rate": "3x_legal",
+    "late_penalty_label": "3 fois le taux d'interet legal",
+    "escompte": "none",
+    "escompte_label": "Pas d'escompte pour paiement anticipe",
+    "recovery_fee": 40
+  }
+}

@@ -1,0 +1,14 @@
+﻿{
+  "mcpServers": {
+    "claude-flow": {
+      "command": "npx",
+      "args": ["-y", "claude-flow@alpha", "mcp"],
+      "description": "RuFlo ÔÇö orchestration multi-agents SPARC / Swarm / Hive Mind"
+    },
+    "markitdown": {
+      "command": "npx",
+      "args": ["-y", "@microsoft/markitdown-mcp"],
+      "description": "microsoft/markitdown ÔÇö convertit PDF/Word/Excel/PPT ÔåÆ Markdown. R├®duit la consommation de tokens (PDF brut = 3ÔÇô5├ù plus de tokens que son Markdown extrait)"
+    }
+  }
+}

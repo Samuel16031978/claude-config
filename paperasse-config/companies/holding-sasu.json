@@ -1,0 +1,66 @@
+﻿{
+  "name": "A_COMPLETER (holding SASU)",
+  "legal_form": "SASU",
+  "capital": "A_COMPLETER",
+  "address": "A_COMPLETER",
+  "siren": "A_COMPLETER",
+  "siret": "A_COMPLETER",
+  "rcs": "A_COMPLETER",
+  "naf": "6420Z",
+  "president": {
+    "title": "President",
+    "first_name": "A_COMPLETER",
+    "last_name": "A_COMPLETER",
+    "civility": "M.",
+    "_comment": "SASU : le dirigeant est le President. NAF 6420Z = activites des societes holding."
+  },
+  "fiscal_year": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "is_first_year": false,
+    "_comment": "A_CONFIRMER : exercice a configurer"
+  },
+  "tax": {
+    "regime_tva": "franchise",
+    "regime_is": "reel_simplifie",
+    "tva_rate": 0.0,
+    "_comment": "Pure holding pour l'instant : hors champ TVA (perception de dividendes uniquement, pas d'activite economique). PASSAGE ANIMATRICE PREVU : des qu'elle facturera des prestations de services (management fees, conseil) a ses filiales (SARL/SCI), elle deviendra assujettie a la TVA -> repasser regime_tva en 'reel_simplifie' ou 'reel_normal' et tva_rate a 0.20. Le statut animatrice ouvre aussi des avantages (exoneration Dutreil, deduction TVA, integration fiscale possible)."
+  },
+  "banks": [
+    {
+      "id": "bank-1",
+      "name": "A_COMPLETER",
+      "account": "5121",
+      "fec_account": "51211"
+    }
+  ],
+  "qonto": {
+    "enabled": false
+  },
+  "stripe_accounts": [],
+  "city": "A_COMPLETER",
+  "invoicing": {
+    "prefix": "F",
+    "separator": "-",
+    "year_format": "YYYY",
+    "next_numbers": {
+      "2025": 1,
+      "2026": 1
+    },
+    "avoir_prefix": "AV"
+  },
+  "payment": {
+    "default_terms": "net_30",
+    "default_terms_label": "30 jours date de facture",
+    "methods": ["virement"],
+    "bank_details": {
+      "iban": "",
+      "bic": ""
+    },
+    "late_penalty_rate": "3x_legal",
+    "late_penalty_label": "3 fois le taux d'interet legal",
+    "escompte": "none",
+    "escompte_label": "Pas d'escompte pour paiement anticipe",
+    "recovery_fee": 40
+  }
+}

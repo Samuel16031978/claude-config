@@ -1,0 +1,66 @@
+﻿{
+  "repos": [
+    {
+      "full_name": "withkynam/vibecode-pro-max-kit",
+      "owner": "withkynam",
+      "name": "vibecode-pro-max-kit",
+      "description": "Spec-driven coding harness ÔÇö 12 assistants, 31 outils, 7 raccourcis de cycle de vie, m├®moire de contexte persistante. Compatible Claude Code, Codex, Cursor.",
+      "added_date": "2026-05-28",
+      "last_checked": "2026-05-28",
+      "pushed_at": "2026-05-28T06:59:31Z",
+      "score": 85,
+      "status": "to_install"
+    },
+    {
+      "full_name": "unknown/get-shit-done-redux",
+      "owner": "unknown",
+      "name": "get-shit-done-redux",
+      "description": "33 assistants sp├®cialis├®s + 67 raccourcis ÔÇö correction de code, documentation, recherche, planification, audit qualit├®/s├®curit├®.",
+      "added_date": "2026-05-28",
+      "last_checked": "2026-05-28",
+      "pushed_at": null,
+      "score": 100,
+      "status": "installed"
+    },
+    {
+      "full_name": "unknown/adhd",
+      "owner": "unknown",
+      "name": "adhd",
+      "description": "Outil de r├®flexion structur├®e pour g├®n├®rer des id├®es cr├®atives.",
+      "added_date": "2026-05-28",
+      "last_checked": "2026-05-28",
+      "pushed_at": null,
+      "score": 90,
+      "status": "installed"
+    },
+    {
+      "full_name": "unknown/FigMirror",
+      "owner": "unknown",
+      "name": "FigMirror",
+      "description": "5 outils de visualisation de donn├®es style publication scientifique.",
+      "added_date": "2026-05-28",
+      "last_checked": "2026-05-28",
+      "pushed_at": null,
+      "score": 90,
+      "status": "installed"
+    }
+  ],
+  "surveiller": [
+    {
+      "full_name": "op7418/guizang-social-card-skill",
+      "owner": "op7418",
+      "name": "guizang-social-card-skill",
+      "description": "G├®n├®rateur de cartes visuelles pour r├®seaux sociaux (28 mod├¿les, 10 th├¿mes) ÔÇö con├ºu pour ├¬tre install├® dans ~/.claude/skills/.",
+      "added_date": "2026-05-28",
+      "last_checked": "2026-05-28",
+      "pushed_at": "2026-05-27T16:58:08Z",
+      "score": 40,
+      "status": "watch"
+    }
+  ],
+  "meta": {
+    "last_veille": "2026-05-28",
+    "next_veille": "2026-05-30",
+    "veille_interval_hours": 48
+  }
+}

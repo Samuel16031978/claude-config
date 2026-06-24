@@ -1,0 +1,32 @@
+﻿[
+  {
+    "date": "2026-05-30",
+    "name": "Morning Course \u00e0 pied",
+    "type": "Run",
+    "charge": 165,
+    "CTL": 25.274107,
+    "ATL": 50.851166,
+    "duree_min": 158,
+    "fc_moy": 145
+  },
+  {
+    "date": "2026-05-25",
+    "name": "Morning Course \u00e0 pied",
+    "type": "Run",
+    "charge": 288,
+    "CTL": 24.09638,
+    "ATL": 59.00625,
+    "duree_min": 321,
+    "fc_moy": 140
+  },
+  {
+    "date": "2026-05-24",
+    "name": "Lunch Randonn\u00e9e",
+    "type": "Hike",
+    "charge": 75,
+    "CTL": 17.73756,
+    "ATL": 23.840824,
+    "duree_min": 192,
+    "fc_moy": 112
+  }
+]

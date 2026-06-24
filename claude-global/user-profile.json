@@ -1,0 +1,75 @@
+﻿{
+  "name": "Samuel",
+  "profession": "Dirigeant SC R├®novations ÔÇö BTP & R├®novation + Consultant IA/Automatisation PME",
+  "location": "France (Europe/Paris)",
+  "language": "fr",
+
+  "domains": {
+    "professional": [
+      "BTP", "r├®novation", "construction", "chantier", "pathologie b├ótiment",
+      "expertise judiciaire", "planning", "devis",
+      "automatisation workflows", "agence IA PME/PMI",
+      "formations IA construction"
+    ],
+    "sport": [
+      "triathlon", "running", "cycling", "Ironman", "marathon",
+      "natation", "entra├«nement", "performance", "r├®cup├®ration"
+    ]
+  },
+
+  "tools_stack": {
+    "professional": ["N8N", "Monday.com", "Notion", "Outlook", "Google Drive", "OneDrive", "WhatsApp (Evolution API)", "Make", "OBAT", "Render"],
+    "sport": ["Garmin Connect", "intervals.icu", "Notion (suivi perso)"]
+  },
+
+  "mcp_scoring": {
+    "high_value": {
+      "keywords": [
+        "whatsapp", "n8n", "monday", "webhook", "workflow", "automation",
+        "btp", "construction", "chantier", "renovation", "devis", "gantt", "planning",
+        "garmin", "intervals", "triathlon", "running", "cycling", "swim",
+        "training", "ironman", "marathon", "performance", "endurance",
+        "linkedin", "prospection", "lead", "crm"
+      ],
+      "points": 20,
+      "comment": "Outils du stack actuel et domaines prioritaires ÔÇö pro ET sport"
+    },
+    "medium_value": {
+      "keywords": [
+        "email", "calendar", "pdf", "document", "signature",
+        "social-media", "youtube", "newsletter", "contenu",
+        "make", "zapier", "api", "scheduling", "render",
+        "accounting", "invoice", "finance", "reporting"
+      ],
+      "points": 10,
+      "comment": "Outils p├®riph├®riques utiles mais non prioritaires"
+    },
+    "low_value": {
+      "keywords": [
+        "gaming", "crypto", "trading", "healthcare", "education-kids",
+        "ecommerce", "retail", "blockchain", "nft"
+      ],
+      "points": 0,
+      "comment": "Hors contexte Samuel"
+    }
+  },
+
+  "current_projects": [
+    "Assistant WhatsApp ÔåÆ N8N ÔåÆ Monday (projet prioritaire bloqu├®)",
+    "Agence workflows PME/PMI",
+    "Applications IA pour SC R├®novations",
+    "Formation Expert B├ótiment",
+    "Ironman Barcelona Octobre 2026 (finisher plaisir)",
+    "Sub-3h marathon 2027-2028"
+  ],
+
+  "mcp_wishlist": [
+    "WhatsApp MCP ÔÇö finaliser le pipeline assistant IA",
+    "N8N MCP ÔÇö d├®clencher et monitorer les workflows depuis Claude",
+    "Garmin MCP ÔÇö lire donn├®es entra├«nements dans Claude",
+    "intervals.icu MCP ÔÇö analyser charge et forme depuis Claude",
+    "Make MCP ÔÇö alternative/compl├®ment N8N",
+    "LinkedIn MCP ÔÇö prospection agence IA et contenu social",
+    "OBAT MCP ÔÇö gestion chantiers SC R├®novations (si disponible)"
+  ]
+}

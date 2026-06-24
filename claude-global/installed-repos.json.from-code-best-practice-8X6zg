@@ -1,0 +1,292 @@
+﻿[
+  {
+    "name": "open-gsd/get-shit-done-redux",
+    "url": "https://github.com/open-gsd/get-shit-done-redux",
+    "installed_at": "2026-05-28",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 1383,
+    "stars_current": 4000,
+    "files_installed": {
+      "agents": 33,
+      "commands": 67,
+      "skills": 0
+    },
+    "update_available": true,
+    "update_note": "Nouvelle activit├® : v1.4.5 publi├®e le 2026-06-12. Stars : 1862 ÔåÆ 4000."
+  },
+  {
+    "name": "UditAkhourii/adhd",
+    "url": "https://github.com/UditAkhourii/adhd",
+    "installed_at": "2026-05-28",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 378,
+    "stars_current": 814,
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 1
+    },
+    "update_available": false
+  },
+  {
+    "name": "VILA-Lab/FigMirror",
+    "url": "https://github.com/VILA-Lab/FigMirror",
+    "installed_at": "2026-05-28",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 335,
+    "stars_current": 464,
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 5
+    },
+    "update_available": false
+  },
+  {
+    "name": "obra/superpowers",
+    "url": "https://github.com/obra/superpowers",
+    "installed_at": "2026-06-02",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 150000,
+    "stars_current": 228000,
+    "install_path": ".claude/skills/superpowers/",
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 9
+    },
+    "skills_installed": [
+      "systematic-debugging",
+      "verification-before-completion",
+      "executing-plans",
+      "subagent-driven-development",
+      "dispatching-parallel-agents",
+      "finishing-a-development-branch",
+      "requesting-code-review",
+      "receiving-code-review",
+      "using-git-worktrees"
+    ],
+    "skills_pending": [
+      "brainstorming",
+      "test-driven-development",
+      "using-superpowers",
+      "writing-plans",
+      "writing-skills"
+    ],
+    "pending_note": "5 outils non install├®s : contenu non r├®cup├®rable verbatim via WebFetch (fichiers refus├®s par le mod├¿le). ├Ç r├®essayer lors d'une prochaine session.",
+    "update_available": false
+  },
+  {
+    "name": "thedotmack/claude-mem",
+    "url": "https://github.com/thedotmack/claude-mem",
+    "installed_at": "2026-06-02",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 80234,
+    "stars_current": 82300,
+    "score": 96,
+    "install_path": ".claude/skills/claude-mem/",
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 4
+    },
+    "skills_installed": [
+      "mem-search",
+      "learn-codebase",
+      "make-plan",
+      "smart-explore"
+    ],
+    "skills_available": [
+      "babysit",
+      "design-is",
+      "do",
+      "how-it-works",
+      "knowledge-agent",
+      "oh-my-issues",
+      "pathfinder",
+      "timeline-report",
+      "version-bump",
+      "weekly-digests",
+      "wowerpoint"
+    ],
+    "worker_required": true,
+    "worker_note": "Les outils mem-search et smart-explore n├®cessitent le worker MCP (port 37777). Installation compl├¿te : npx thedotmack/claude-mem ou npm install -g thedotmack/claude-mem. learn-codebase et make-plan fonctionnent sans le worker.",
+    "update_available": true,
+    "update_note": "v13.6.0 publi├®e le 2026-06-13. V├®rifier le changelog pour de nouveaux outils."
+  },
+  {
+    "name": "ruvnet/ruflo",
+    "url": "https://github.com/ruvnet/ruflo",
+    "installed_at": "2026-06-03",
+    "last_checked": "2026-06-22",
+    "stars_at_install": 57682,
+    "stars_current": 59479,
+    "files_installed": {
+      "agents": 108,
+      "commands": 168,
+      "skills": 39
+    },
+    "update_available": true,
+    "update_note": "Nouvelle activit├® : pushed_at 2026-06-14T07:54:58Z"
+  },
+  {
+    "name": "microsoft/markitdown",
+    "url": "https://github.com/microsoft/markitdown",
+    "added_manually": true,
+    "added_at": "2026-06-12",
+    "last_checked": "2026-06-22",
+    "stars_current": 153000,
+    "status": "outil_externe",
+    "format": "pip / MCP",
+    "install_note": "pip install markitdown  ÔÇö  ou MCP : npx @microsoft/markitdown-mcp dans .claude/mcp.json",
+    "usage_note": "Convertit PDF/Word/Excel/PPT ÔåÆ Markdown. R├®duit significativement la consommation de tokens : un PDF brut consomme 3ÔÇô5├ù plus de tokens que son ├®quivalent Markdown. Cas d'usage : devis BTP, plans, factures, tout document structur├® ├á passer ├á Claude.",
+    "score_veille": 25,
+    "score_note": "Hors scoring standard (pas de .claude/ dans le repo). Ajout manuel sur recommandation Samuel.",
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 0
+    },
+    "update_available": false
+  },
+  {
+    "name": "shanraisshan/claude-code-best-practice",
+    "url": "https://github.com/shanraisshan/claude-code-best-practice",
+    "installed_at": "2026-06-23",
+    "installed_note": "Entr├®e r├®troactive ÔÇö tous les fichiers shanraisshan ├®taient d├®j├á pr├®sents dans .claude/ avant cette veille (install├®s lors d'une session pr├®c├®dente non trac├®e).",
+    "last_checked": "2026-06-23",
+    "stars_at_install": 58000,
+    "stars_current": 58000,
+    "score": 80,
+    "files_installed": {
+      "agents": 4,
+      "commands": 0,
+      "skills": 0
+    },
+    "agents_installed": [
+      "development-workflows-research-agent",
+      "presentation-claude-code",
+      "time-agent",
+      "weather-agent"
+    ],
+    "update_available": false
+  },
+  {
+    "name": "affaan-m/ECC",
+    "url": "https://github.com/affaan-m/ECC",
+    "installed_at": "2026-06-23",
+    "last_checked": "2026-06-23",
+    "stars_at_install": 220000,
+    "stars_current": 220000,
+    "score": 80,
+    "install_path": ".claude/skills/everything-claude-code/",
+    "files_installed": {
+      "agents": 0,
+      "commands": 0,
+      "skills": 1
+    },
+    "skills_installed": [
+      "everything-claude-code"
+    ],
+    "skill_note": "Conventions de projet JavaScript pour Claude Code : format de commits Conventional Commits, style de code camelCase fichiers/fonctions + PascalCase classes, tests *.test.js, 8 workflows fr├®quents (Feature Development ~22x/mois, Add New Skill ~4x/mois, etc.).",
+    "update_available": false
+  },
+  {
+    "name": "DietrichGebert/ponytail",
+    "watch_since": "2026-06-12",
+    "last_checked": "2026-06-23",
+    "stars_current": 50833,
+    "score": 65,
+    "status": "surveiller",
+    "format": ".claude-plugin/",
+    "watch_note": "Score 65/100 (stable). Stars en explosion : 692 ÔåÆ 7 943 ÔåÆ 50 833 en quelques jours. Format .claude-plugin/ confirm├® avec skills, commands, hooks. Pas de pertinence directe Samuel (pas de keywords automation/CRM/BTP/sport). ├Ç installer si pertinence Samuel confirm├®e ou si score atteint 80."
+  },
+  {
+    "name": "s0912758806p/agentic-sop-to-work",
+    "url": "https://github.com/s0912758806p/agentic-sop-to-work",
+    "watch_since": "2026-06-12",
+    "last_checked": "2026-06-22",
+    "stars_current": 175,
+    "score": 70,
+    "status": "surveiller",
+    "format": ".claude-plugin/",
+    "watch_note": "Score 70/100 ÔÇö Convertit des SOPs humains en workflows agentiques d├®terministes avec points de contr├┤le. Format .claude-plugin/ confirm├® (skills + commands + hooks). Topics automation + workflow tr├¿s pertinents pour Samuel. Nouveau commit 2026-06-14. ├Ç installer si stars > 500 ou si score atteint 80."
+  },
+  {
+    "name": "cobusgreyling/loop-engineering",
+    "url": "https://github.com/cobusgreyling/loop-engineering",
+    "watch_since": "2026-06-12",
+    "last_checked": "2026-06-22",
+    "stars_current": 176,
+    "score": 60,
+    "status": "surveiller",
+    "format": "skills/ (pas de .claude/ natif)",
+    "watch_note": "Score 60/100 ÔÇö Patterns et r├®f├®rentiels pour boucles agentiques (loop engineering). Topics: automation, devops-automation, mcp, ai-agents, claude-code. Pas de .claude/ natif. Nouveau commit 2026-06-13. ├Ç upgrader si le d├®p├┤t adopte le format .claude/ ou .claude-plugin/."
+  },
+  {
+    "name": "arnabbagxd/Brand-building-skills",
+    "url": "https://github.com/arnabbagxd/Brand-building-skills",
+    "watch_since": "2026-06-15",
+    "last_checked": "2026-06-22",
+    "stars_current": 116,
+    "score": 70,
+    "status": "surveiller",
+    "format": ".claude-plugin/",
+    "watch_note": "Score 70/100 ÔÇö Outils de strat├®gie de marque pour Claude Code : naming, identity, voice, positioning, messaging, auditing, launch. Format .claude-plugin/ avec skills/ confirm├®. Pertinent pour Samuel : brand building = linkedin/prospection/CRM. ├Ç installer si stars > 500 ou si score atteint 80."
+  },
+  {
+    "name": "VisionForge-OU/foreman",
+    "url": "https://github.com/VisionForge-OU/foreman",
+    "watch_since": "2026-06-22",
+    "last_checked": "2026-06-22",
+    "stars_current": 73,
+    "score": 75,
+    "status": "surveiller",
+    "format": ".claude/skills/ + .claude/agents/",
+    "watch_note": "Score 75/100 ÔÇö Orchestrateur TUI agentic supervisant des assistants Claude Code sans t├¬te via un pipeline de livraison logicielle. .claude/skills/ (foreman-grill-docs, foreman-to-prd, foreman-to-issues, foreman-tdd) + .claude/agents/ (evaluator, auditor, retro). Topics: automation + agentic-workflow tr├¿s pertinents Samuel. ├Ç installer si stars > 100."
+  },
+  {
+    "name": "wshobson/agents",
+    "url": "https://github.com/wshobson/agents",
+    "watch_since": "2026-06-23",
+    "last_checked": "2026-06-23",
+    "stars_current": 37000,
+    "score": 85,
+    "status": "surveiller",
+    "format": ".claude-plugin/ (marketplace imbriqu├®)",
+    "watch_note": "Score 85/100 ÔÇö Marketplace de 192 assistants / 156 outils / 102 raccourcis pour Claude Code. Format .claude-plugin/ complexe : chaque plugin a son propre sous-dossier plugins/[name]/.claude-plugin/. N├®cessite une s├®lection manuelle des plugins pertinents. ├Ç explorer manuellement pour s├®lectionner les plugins automation/CRM/planning."
+  },
+  {
+    "name": "OthmanAdi/planning-with-files",
+    "url": "https://github.com/OthmanAdi/planning-with-files",
+    "watch_since": "2026-06-23",
+    "last_checked": "2026-06-23",
+    "stars_current": 23000,
+    "score": 85,
+    "status": "surveiller",
+    "format": ".claude-plugin/",
+    "watch_note": "Score 85/100 ÔÇö Planification de projet avec fichiers pour Claude Code. Keyword PRIMARY : planning. Format .claude-plugin/ confirm├® (marketplace.json). ÔÜá´©Å Fichiers raw inaccessibles (404 sur toutes les branches test├®es : main, master). ├Ç r├®essayer avec un acc├¿s direct au d├®p├┤t."
+  },
+  {
+    "name": "sickn33/antigravity-awesome-skills",
+    "url": "https://github.com/sickn33/antigravity-awesome-skills",
+    "watch_since": "2026-06-23",
+    "last_checked": "2026-06-23",
+    "stars_current": 41000,
+    "score": 65,
+    "status": "surveiller",
+    "format": ".claude/skills/",
+    "watch_note": "Score 65/100 ÔÇö Catalogue de 200+ outils Claude Code. Format .claude/skills/ natif. Stars importantes (41K) mais pertinence Samuel limit├®e (pas de keywords PRIMARY confirm├®s). ├Ç v├®rifier manuellement pour identifier des outils automation/planning/CRM."
+  },
+  {
+    "name": "addyosmani/agent-skills",
+    "url": "https://github.com/addyosmani/agent-skills",
+    "watch_since": "2026-06-23",
+    "last_checked": "2026-06-23",
+    "stars_current": 65000,
+    "score": 60,
+    "status": "surveiller",
+    "format": ".claude/skills/",
+    "watch_note": "Score 60/100 ÔÇö Outils pour assistants Claude Code par Addy Osmani (Google). Format .claude/skills/ natif. 65K stars mais pertinence Samuel mod├®r├®e. ├Ç v├®rifier si des outils couvrent automation/workflow/planning."
+  }
+]

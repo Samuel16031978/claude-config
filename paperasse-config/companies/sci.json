@@ -1,0 +1,58 @@
+﻿{
+  "name": "A_COMPLETER (SCI)",
+  "legal_form": "SCI",
+  "capital": "A_COMPLETER",
+  "address": "A_COMPLETER",
+  "siren": "A_COMPLETER",
+  "siret": "A_COMPLETER",
+  "rcs": "A_COMPLETER",
+  "naf": "6820B",
+  "gerant": {
+    "title": "Gerant",
+    "first_name": "A_COMPLETER",
+    "last_name": "A_COMPLETER",
+    "civility": "M.",
+    "_comment": "SCI : le dirigeant est le Gerant. NAF 6820B = location de terrains et autres biens immobiliers."
+  },
+  "fiscal_year": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "is_first_year": false,
+    "_comment": "A_CONFIRMER : exercice a configurer"
+  },
+  "tax": {
+    "regime_tva": "franchise",
+    "regime_is": "reel_simplifie",
+    "tva_rate": 0.0,
+    "_comment": "SCI a l'IS (confirme setup) : amortissement du bien possible, resultat impose a l'IS au niveau de la SCI. TVA : pour l'instant sans TVA (location nue d'habitation exoneree). Option TVA possible uniquement sur locaux professionnels/commerciaux (art. 260-2 CGI), pas sur l'habitation nue. Si option exercee -> regime_tva 'reel_simplifie' et tva_rate 0.20. Attention SCI a l'IS : plus-value professionnelle a la revente (pas d'abattement pour duree de detention)."
+  },
+  "banks": [
+    {
+      "id": "bank-1",
+      "name": "A_COMPLETER",
+      "account": "5121",
+      "fec_account": "51211"
+    }
+  ],
+  "qonto": { "enabled": false },
+  "stripe_accounts": [],
+  "city": "A_COMPLETER",
+  "invoicing": {
+    "prefix": "F",
+    "separator": "-",
+    "year_format": "YYYY",
+    "next_numbers": { "2025": 1, "2026": 1 },
+    "avoir_prefix": "AV"
+  },
+  "payment": {
+    "default_terms": "net_30",
+    "default_terms_label": "30 jours date de facture",
+    "methods": ["virement"],
+    "bank_details": { "iban": "", "bic": "" },
+    "late_penalty_rate": "3x_legal",
+    "late_penalty_label": "3 fois le taux d'interet legal",
+    "escompte": "none",
+    "escompte_label": "Pas d'escompte pour paiement anticipe",
+    "recovery_fee": 40
+  }
+}
