@@ -44,13 +44,17 @@ notation** qui tourne jusqu'à ~10/10, et un usage **polyvalent** (améliorer un
 Créer le skill **`ask-panel`** (remplace le `/ask-panel` actuel ; invocation `/ask-panel`
 préservée) dans le namespace de Samuel, calqué sur la structure de `figmirror`.
 
-### Le panel des 4 voix
-| Voix | Source | Mode |
-|------|--------|------|
-| **Claude** | natif (outil interne) | **automatique** |
-| **ChatGPT** | son connecteur Notion | déclenché par Samuel (pont Notion) |
-| **Gemini** | app / connecteur | déclenché par Samuel (pont Notion) |
-| **Notion AI** (ou DeepSeek) | IA native Notion | déclenché par Samuel (pont Notion) |
+### Le panel des 4 voix (connecteurs vérifiés, 2026)
+| Voix | Accès page Notion | Mode |
+|------|-------------------|------|
+| **Claude** | natif (Claude Code) | **automatique** |
+| **ChatGPT** | connecteur Notion (Connectors/MCP, offres payantes) | déclenché par Samuel |
+| **Notion AI** | natif ; sélecteur multi-modèles (GPT/Claude/DeepSeek) | déclenché par Samuel |
+| **Gemini** | **aucun connecteur grand public** → copier-coller manuel | relais manuel par Samuel |
+
+> Vérifié par recherche web : seuls ChatGPT et Notion AI accèdent à la page directement.
+> Gemini n'a pas de connecteur Notion grand public (options Enterprise/Zapier = API, exclues),
+> donc sa voix passe par copier-coller manuel. Aucun cas n'utilise d'API.
 
 ### Boucle de notation (le cœur nouveau)
 Pour `tour = 1..max_tours` (défaut **4**) :

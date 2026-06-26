@@ -27,12 +27,16 @@ arrivent désormais par le pont Notion (voir `references/notion-bridge.md`).
 
 ## Les 4 voix
 
-| Voix | Source | Mode |
-|------|--------|------|
-| Claude | natif | automatique |
-| ChatGPT | son connecteur Notion | déclenché par Samuel |
-| Gemini | app / connecteur | déclenché par Samuel |
-| Notion AI | IA native Notion | déclenché par Samuel |
+| Voix | Accès à la page Notion | Mode |
+|------|------------------------|------|
+| Claude | natif (Claude Code) | automatique |
+| ChatGPT | connecteur Notion (offres payantes) | déclenché par Samuel sur la page |
+| Notion AI | natif dans la page | déclenché par Samuel sur la page |
+| Gemini | **aucun connecteur grand public** → copier-coller manuel | Samuel relaie page ↔ Gemini |
+
+> Fait vérifié (2026) : seuls ChatGPT (via Connectors/Notion MCP) et Notion AI (natif)
+> lisent/écrivent la page directement. **Gemini n'a pas de connecteur Notion grand public** —
+> sa voix passe par copier-coller manuel. Aucun cas n'utilise d'API.
 
 Rôles détaillés et protocole de déclenchement : `references/voix-panel.md`.
 
@@ -63,8 +67,9 @@ Pour chaque tour `N`, applique le protocole de `references/notion-bridge.md` :
 1. **Poster** sur la page Notion : la question + l'état courant de la cible + un gabarit avec
    une section vide par voix.
 2. **Pause handoff** : affiche
-   « 🤝 Question postée sur Notion. Déclenche ChatGPT, Gemini et Notion AI sur la page, puis
-   dis-moi quand c'est prêt. » et **attends** la confirmation de Samuel.
+   « 🤝 Question postée sur Notion. (1) Déclenche ChatGPT et Notion AI sur la page (ils y
+   écrivent directement). (2) Copie la question dans Gemini et colle sa réponse dans la
+   section Gemini. Dis-moi quand c'est prêt. » et **attends** la confirmation de Samuel.
 3. **Relire** la page (`notion-fetch`), récupérer les 3 réponses externes, **ajouter la voix
    Claude** (formule ta propre réponse depuis l'état courant).
 4. **Noter** : chaque voix donne une note /10 + critique selon la grille ; calcule le score

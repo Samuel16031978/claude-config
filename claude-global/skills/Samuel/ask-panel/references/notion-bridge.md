@@ -32,13 +32,13 @@ en tête de page, précédé d'un séparateur et titré par la date + la cible.
 (remplie automatiquement par Claude)
 
 ### Réponse ChatGPT
-(à compléter)
-
-### Réponse Gemini
-(à compléter)
+(via connecteur Notion — déclenché par Samuel)
 
 ### Réponse Notion AI
-(à compléter)
+(natif — déclenché par Samuel ; choisir le modèle dans le sélecteur Notion AI)
+
+### Réponse Gemini
+(copier-coller manuel par Samuel — pas de connecteur Notion)
 ```
 
 Chaque section IA demande explicitement : une **note /10**, une **critique** concrète, et le
@@ -47,7 +47,8 @@ cas échéant un **drapeau fatal** (cf. `grille-notation.md`).
 ## Cycle de lecture/écriture
 
 1. `notion-update-page` : poster le gabarit du tour `N`.
-2. **Pause handoff** : Samuel déclenche les 3 IA externes sur la page (voir `voix-panel.md`).
+2. **Pause handoff** : Samuel déclenche ChatGPT + Notion AI sur la page (connecteur/natif) et
+   relaie Gemini à la main (copier-coller). Voir `voix-panel.md`.
 3. `notion-fetch` : relire la page, parser les 3 sections externes + ajouter Claude.
 4. Si une section est vide : signaler, proposer de continuer à 3/4 ou relancer la pause.
 
