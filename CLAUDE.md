@@ -1,35 +1,35 @@
-﻿# CLAUDE.md ÔÇö Projet-Test (Samuel Chembah)
+# CLAUDE.md — Projet-Test (Samuel Chembah)
 
 ## Leçons apprises
 
 - 2026-06-26 connecteurs/intégrations : toujours vérifier (recherche web) qu'un connecteur existe réellement avant de l'inscrire dans une architecture — ne pas supposer. Ex : Gemini n'a aucun connecteur Notion grand public (relais copier-coller manuel), DeepSeek passe par Notion AI.
 
-## Structure du d├®p├┤t
+## Structure du dépôt
 
 ```
 Projet-Test/
-Ôö£ÔöÇÔöÇ nutritrack/          # Application mobile nutrition (Expo/React Native)
-ÔööÔöÇÔöÇ claude-global/       # Outils et skills Claude Code
-    Ôö£ÔöÇÔöÇ intervals_icu.py                              # Client API intervals.icu
-    ÔööÔöÇÔöÇ skills/samuel/intervals-icu-samuel/SKILL.md  # D├®finition du skill
+├── nutritrack/          # Application mobile nutrition (Expo/React Native)
+└── claude-global/       # Outils et skills Claude Code
+    ├── intervals_icu.py                              # Client API intervals.icu
+    └── skills/samuel/intervals-icu-samuel/SKILL.md  # Définition du skill
 ```
 
 ## Configuration de l'environnement
 
-### Politique r├®seau
-Le domaine `intervals.icu` est autoris├® dans la politique r├®seau de l'environnement.
+### Politique réseau
+Le domaine `intervals.icu` est autorisé dans la politique réseau de l'environnement.
 
 ### Variables d'environnement
-`claude-global/.env.local` (non commit├®) doit contenir :
+`claude-global/.env.local` (non commité) doit contenir :
 ```
-INTERVALS_API_KEY=<cl├® API intervals.icu>
+INTERVALS_API_KEY=<clé API intervals.icu>
 ```
 
 ## Skill intervals-icu-samuel
 
-Connexion en temps r├®el ├á intervals.icu pour calculer des s├®ances et g├®rer la charge d'entra├«nement de Samuel (Athlete ID : `i171091`).
+Connexion en temps réel à intervals.icu pour calculer des séances et gérer la charge d'entraînement de Samuel (Athlete ID : `i171091`).
 
-**D├®clencheurs :** CTL, ATL, TSB, charge, intervals.icu, "quelle s├®ance", zones FC, FTP, TRIMP, hrTSS, planification s├®ance.
+**Déclencheurs :** CTL, ATL, TSB, charge, intervals.icu, "quelle séance", zones FC, FTP, TRIMP, hrTSS, planification séance.
 
 ### Commandes disponibles
 
@@ -42,20 +42,20 @@ python3 intervals_icu.py wellness
 # Zones FC par sport
 python3 intervals_icu.py zones [run|ride|swim]
 
-# Charge n├®cessaire pour un CTL cible
+# Charge nécessaire pour un CTL cible
 python3 intervals_icu.py calc_charge --ctl_target 30
 
-# Convertir une charge en s├®ance
+# Convertir une charge en séance
 python3 intervals_icu.py session --charge 120 --sport run --zone 2
 
 # Historique des 7 derniers jours
 python3 intervals_icu.py history --days 7
 
-# Pousser une s├®ance sur le calendrier (confirmation Samuel requise)
+# Pousser une séance sur le calendrier (confirmation Samuel requise)
 python3 intervals_icu.py push_event --date 2026-06-01 --name "Run Z2" --description "75 min Z2"
 ```
 
-### R├¿gles importantes
+### Règles importantes
 - Toujours lire `wellness` avant tout calcul
-- Ne jamais pousser une s├®ance sans confirmation explicite de Samuel
-- La cl├® API ne doit jamais ├¬tre commit├®e dans git
+- Ne jamais pousser une séance sans confirmation explicite de Samuel
+- La clé API ne doit jamais être commitée dans git
