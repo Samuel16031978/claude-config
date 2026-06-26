@@ -59,6 +59,7 @@ python3 sync_skills.py status           # liste les skills + détecte les modifs
 python3 sync_skills.py bundle           # zippe uniquement les skills modifiés -> dist/skills/
 python3 sync_skills.py bundle --all     # zippe les 6 skills
 python3 sync_skills.py commit-manifest  # fige l'état courant dans le manifeste (après un sync réussi)
+python3 sync_skills.py install          # lie les skills dans ~/.claude/skills (Claude Code les voit)
 ```
 
 La détection repose sur un **sha256 du contenu** de chaque dossier skill (pas les dates, qui
@@ -77,9 +78,9 @@ mentent après un clone). Le manifeste versionné mémorise le dernier état syn
    le manifeste à jour + le rapport. Pousser sur `main`.
 6. **Confirmer** — afficher le résumé (skills à jour, ou liste des zips à ré-importer côté claude.ai).
 
-> Côté **Claude Code** : aucune action manuelle. Le `git pull` de l'étape 1 suffit si
-> `~/.claude/skills/samuel` pointe vers (ou est un checkout de) ce dossier du repo. Voir
-> « Installation locale » plus bas.
+> Côté **Claude Code** : aucune action manuelle si l'installation locale (ci-dessous) a été
+> faite **en mode symlink** — le `git pull` de l'étape 1 met alors le contenu à jour tout seul.
+> En mode copie, relancer `sync_skills.py install --copy` après le pull.
 
 ## Prompt de la routine (à coller dans Claude Code → Routines)
 
@@ -95,16 +96,27 @@ Synchronise mes skills perso. Étapes :
 Ne committe jamais dist/ (gitignoré) ni aucun secret.
 ```
 
-## Installation locale (Claude Code de Samuel, une seule fois)
+## Installation locale & mise à jour de Claude Code
 
-Pour que `git pull` suffise côté Claude Code, lier les skills perso au dossier Claude Code :
+Claude Code lit les skills **à plat** : `~/.claude/skills/<skill>/SKILL.md`. La commande
+`install` crée donc un lien (ou une copie) **par skill**, pas un lien du dossier `samuel/` entier.
 
 ```bash
-# Depuis le repo cloné en local
-ln -s "$(pwd)/claude-global/skills/samuel" ~/.claude/skills/samuel
-# ou, sans symlink : copier après chaque pull
-# cp -r claude-global/skills/samuel/* ~/.claude/skills/
+cd claude-global
+python3 sync_skills.py install        # symlink (recommandé) : ~/.claude/skills/<skill> -> repo
+python3 sync_skills.py install --copy # copie autonome (si tu ne veux pas de liens)
 ```
+
+**Comment Claude Code est mis à jour ensuite — deux régimes :**
+
+| Mode | Setup (une fois) | Mise à jour après une modif sur GitHub |
+|------|------------------|----------------------------------------|
+| **symlink** (défaut) | `install` | `git pull` **suffit** — le lien reflète le repo en direct |
+| **copie** | `install --copy` | `git pull` **puis** `install --copy` pour recopier |
+
+Le seul cas qui exige de relancer `install` en mode symlink : l'**ajout** d'un nouveau skill
+(il lui faut son propre lien). Une simple modif de contenu d'un skill déjà lié est, elle,
+visible immédiatement après le `git pull`.
 
 ## Règles
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parent
 SKILLS_DIR = ROOT / "skills" / "samuel"
 MANIFEST_PATH = SKILLS_DIR / ".sync-manifest.json"
 DIST_DIR = ROOT / "dist" / "skills"
+CLAUDE_SKILLS_DIR = Path.home() / ".claude" / "skills"
 SKILL_FILE = "SKILL.md"
 
 
@@ -95,6 +97,32 @@ def cmd_commit_manifest(_: argparse.Namespace) -> int:
     return 0
 
 
+def _install_one(link: Path, source: Path, copy: bool) -> str:
+    if link.is_symlink():
+        link.unlink()
+    if copy:
+        shutil.copytree(source, link, dirs_exist_ok=True)
+        return "copié"
+    if link.is_dir():
+        return "ignoré (dossier réel)"
+    if link.exists():
+        link.unlink()
+    link.symlink_to(source.resolve(), target_is_directory=True)
+    return "lié"
+
+
+def cmd_install(args: argparse.Namespace) -> int:
+    target_root = Path(args.target).expanduser() if args.target else CLAUDE_SKILLS_DIR
+    target_root.mkdir(parents=True, exist_ok=True)
+    skills = iter_skill_dirs()
+    for skill_dir in skills:
+        state = _install_one(target_root / skill_dir.name, skill_dir, args.copy)
+        print(f"  {state:22} {skill_dir.name}")
+    mode = "copie" if args.copy else "symlink"
+    print(f"\n{len(skills)} skills installés vers {target_root} ({mode}).")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Sync des skills perso entre GitHub, Claude Code et Claude AI."
@@ -109,6 +137,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("commit-manifest", help="ecrit le manifeste avec l'etat courant").set_defaults(
         func=cmd_commit_manifest
     )
+    install = sub.add_parser("install", help="lie (ou copie) les skills vers ~/.claude/skills pour Claude Code")
+    install.add_argument("--copy", action="store_true", help="copie au lieu de symlink (a relancer apres chaque git pull)")
+    install.add_argument("--target", help="dossier cible (defaut ~/.claude/skills)")
+    install.set_defaults(func=cmd_install)
     return parser
 
 

@@ -83,8 +83,9 @@ cd claude-global
 python3 sync_skills.py status   # quels skills ont changé depuis le dernier sync ?
 python3 sync_skills.py bundle   # zippe les skills modifiés -> dist/skills/ (à importer dans claude.ai)
 python3 sync_skills.py commit-manifest   # fige l'état après un sync réussi
+python3 sync_skills.py install   # lie les skills (à plat) dans ~/.claude/skills pour Claude Code
 ```
 
-- **Claude Code** se synchronise par `git pull` (automatique si `~/.claude/skills/samuel` pointe vers le repo).
+- **Claude Code** : `install` (symlink) une fois, puis `git pull` suffit pour les mises à jour de contenu.
 - **claude.ai** : import manuel du `.zip` par skill modifié (Settings → Skills) — la routine liste lesquels.
 - `dist/` est gitignoré (bundles reconstructibles à la demande, jamais commités).
