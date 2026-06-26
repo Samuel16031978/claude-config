@@ -71,7 +71,8 @@ python3 sync_skills.py commit-manifest   # fige l'état après un sync réussi
 python3 sync_skills.py install   # lie les skills (à plat) dans ~/.claude/skills pour Claude Code
 ```
 
-- **Claude Code** : `install` une fois (symlink par skill), puis `git pull` suffit pour mettre à jour le contenu.
+- **Claude Code (macOS/Linux)** : `install` une fois (symlink par skill), puis `git pull` suffit.
+- **Claude Code (Windows)** : lancer `.\install_skills.ps1` (git pull + copie, sans Python ni admin). `sync_skills.py install` bascule aussi automatiquement en mode copie sous Windows.
 - **claude.ai** : import manuel du `.zip` par skill modifié (Settings → Skills).
 
 Détails et prompt de routine : [`skill-sync/SKILL.md`](claude-global/skills/samuel/skill-sync/SKILL.md).
