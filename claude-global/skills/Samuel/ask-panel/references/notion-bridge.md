@@ -1,67 +1,72 @@
 # Ask Panel — pont Notion (sans API)
 
-Décrit comment Claude utilise le connecteur Notion comme **support d'échange entre les IA**.
-Aucune API n'est appelée : seuls les outils MCP Notion sont utilisés.
+Le connecteur Notion sert de **support d'échange entre les IA**. Aucune API : seuls les outils
+MCP Notion sont utilisés. Le stockage suit la base existante de Samuel.
 
 ## Outils MCP
 
-Noms logiques (le préfixe du serveur MCP peut varier selon l'environnement ; ici
-`mcp__9998ab9a-7b0b-4817-878b-367952b8f929__`) :
-- `notion-search` — retrouver la page de panel.
-- `notion-fetch` — lire la page (récupérer les réponses des autres IA).
-- `notion-create-pages` — créer la page de session si absente.
-- `notion-update-page` — poster la question, le gabarit, le verdict.
+Préfixe serveur variable selon l'environnement (ici `mcp__9998ab9a-7b0b-4817-878b-367952b8f929__`) :
+- `notion-search` — retrouver la base / un Run.
+- `notion-fetch` — lire un Run (récupérer les réponses des IA) ou le schéma d'une data source.
+- `notion-create-pages` — créer un Run sous la base.
+- `notion-update-page` — poster le prompt, insérer les réponses, écrire le verdict, MAJ statut.
 
-## Page de session
+## Base de stockage : « 🗂️ Runs — Panels »
 
-Une page Notion dédiée, ex. **« Panel des 4 — Sessions »**. Cherche-la avec `notion-search` ;
-crée-la avec `notion-create-pages` si absente (éviter les doublons). Chaque session = un bloc
-en tête de page, précédé d'un séparateur et titré par la date + la cible.
+- Page base : `https://app.notion.com/p/0b7d4fa9b15446feb9318267ed6135dc`
+- Data source (parent des Runs) : `collection://48030c02-acce-48aa-adf3-208226e3d1ff`
+- Template de référence : `🧩 Template — Run panels`
+  (`https://app.notion.com/p/b3de52be4fa145629fc7355eaa3fc6e4`).
 
-## Gabarit posté à chaque tour
+### Schéma (propriétés du Run)
+| Propriété | Type | Valeur |
+|-----------|------|--------|
+| `Sujet` | title | titre neutre du Run |
+| `Domaine` | select | `Fiscal` / `Business` / `Perso` / `Autre` |
+| `Statut` | status | `Draft` → `Envoyé` → `Réponses reçues` → `Consensus` → `Décidé` |
+| `date:Date:start` | date | date du Run (ISO `YYYY-MM-DD`) |
+| `Prompt master` | text | résumé du prompt envoyé aux panels |
+| `Décision (résumé)` | text | rempli au verdict |
+
+Créer le Run avec `notion-create-pages`, `parent = { data_source_id }`.
+
+## Contenu d'une page Run
 
 ```
-─────────────────────────────
-## [<date>] Tour <N> — <cible>
+> Run généré par ask-panel — conforme au protocole-panel. Orchestrateur : Claude.
 
-**Question :** <question>
-
-**État courant :** <extrait de la cible à évaluer>
-
-### Réponse Claude
-(remplie automatiquement par Claude)
-
-### Réponse ChatGPT
-(via connecteur Notion — déclenché par Samuel)
-
-### Réponse Notion AI
-(natif — déclenché par Samuel ; choisir le modèle dans le sélecteur Notion AI)
-
-### Réponse Gemini
-(copier-coller manuel par Samuel — pas de connecteur Notion)
+## SNAPSHOT (faits + chiffres)
+## Question / décision à prendre
+## Contraintes (non négociables)
+## Prompt master (à envoyer tel quel)
+   (bloc de code = le prompt formulé selon les 6 règles)
+## Réponses du panel (brut)
+   ### 🟣 Claude — orchestrateur   (rempli auto)
+   ### 🟢 ChatGPT                  (connecteur — déclenché par Samuel)
+   ### 🔵 Gemini                   (copier-coller manuel — pas de connecteur)
+   ### 🟠 DeepSeek — contradicteur (via Notion AI ou copier-coller)
+## Consensus (matrice : Point | Pour | Contre | Décision)
+## Verdict consolidé   (note globale /10, trajectoire, recommandation tranchée)
 ```
 
-Chaque section IA demande explicitement : une **note /10**, une **critique** concrète, et le
-cas échéant un **drapeau fatal** (cf. `grille-notation.md`).
+## Cycle de lecture/écriture par tour
 
-## Cycle de lecture/écriture
-
-1. `notion-update-page` : poster le gabarit du tour `N`.
-2. **Pause handoff** : Samuel déclenche ChatGPT + Notion AI sur la page (connecteur/natif) et
-   relaie Gemini à la main (copier-coller). Voir `voix-panel.md`.
-3. `notion-fetch` : relire la page, parser les 3 sections externes + ajouter Claude.
-4. Si une section est vide : signaler, proposer de continuer à 3/4 ou relancer la pause.
+1. `notion-create-pages` (tour 1) ou `notion-update-page` (tours suivants) : poster le Run +
+   le prompt + les sections de voix. `Statut = Envoyé`.
+2. **Pause handoff** : Samuel déclenche ChatGPT (connecteur) + DeepSeek (via Notion AI) sur la
+   page, et relaie Gemini à la main. Voir `voix-panel.md`.
+3. `notion-fetch` : relire le Run, parser les 3 sections externes + ajouter Claude.
+   `Statut = Réponses reçues`. Si une section est vide : signaler, proposer 3/4 ou relancer.
+4. Confronter, noter, écrire la matrice de consensus. `Statut = Consensus`.
 
 ## Sortie finale
 
-- **Idée business** : `notion-update-page` pour écrire en tête de session le **verdict**
-  (LANCER/ABANDONNER), le **score global** et la **trajectoire** des notes. C'est le livrable.
-- **SKILL.md** : la page Notion garde la trace de la confrontation ; le livrable est le
-  commit git (voir `SKILL.md` étape 4).
+- **idée business** : écrire le **Verdict consolidé** dans le Run + renseigner
+  `Décision (résumé)`. `Statut = Décidé`. C'est le livrable.
+- **SKILL.md** : le Run garde la trace ; le livrable est le commit git (cf. `SKILL.md` étape 4).
 
 ## Règles
 
-- Toujours chercher la page avant d'en créer une (éviter les doublons).
+- Toujours chercher la base/le Run avant d'en créer (éviter les doublons).
 - Ne jamais écrire de secret/token sur la page.
-- En cas d'erreur MCP : signaler clairement, ne pas committer un résultat partiel comme s'il
-  était validé.
+- En cas d'erreur MCP : signaler ; ne pas figer un résultat partiel comme s'il était validé.

@@ -1,7 +1,9 @@
 # Ask Panel — grille de notation
 
 Grille **adaptative** selon la cible. Chaque voix note la cible courante puis le score global
-décide de la suite de la boucle.
+décide de la suite de la boucle. La **formulation** des questions et la **confrontation** des
+réponses suivent `protocole-confrontation.md` (6 règles anti-biais + workflow + méta-vérif) —
+la notation ci-dessous s'applique APRÈS confrontation, pour piloter la boucle vers la cible.
 
 ## Schéma JSON attendu par voix
 
