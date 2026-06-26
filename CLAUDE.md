@@ -1,5 +1,9 @@
 ﻿# CLAUDE.md ÔÇö Projet-Test (Samuel Chembah)
 
+## Leçons apprises
+
+- 2026-06-26 connecteurs/intégrations : toujours vérifier (recherche web) qu'un connecteur existe réellement avant de l'inscrire dans une architecture — ne pas supposer. Ex : Gemini n'a aucun connecteur Notion grand public (relais copier-coller manuel), DeepSeek passe par Notion AI.
+
 ## Structure du d├®p├┤t
 
 ```
