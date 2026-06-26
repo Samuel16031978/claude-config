@@ -1,0 +1,123 @@
+---
+name: avis-google
+description: "Rédaction d'avis Google optimisés pour maximiser les points contributeur (Local Guides) tout en apportant une valeur réelle. Déclencheurs : avis Google, rédiger un avis, Local Guide, maximiser points contributeur, review."
+---
+
+# Skill : Rédaction d'avis Google optimisé
+
+## Objectif
+
+Produire un avis Google qui maximise les points de contribution **ET** apporte une valeur réelle aux lecteurs.
+
+---
+
+## Grille de points Google Maps
+
+| Contribution | Points |
+|--------------|--------|
+| Avis (texte) | 10 pts |
+| Avis > 200 caractères | +10 pts bonus → **20 pts total** |
+| Note seule (étoiles) | 1 pt |
+| Photo | 5 pts/photo |
+| Tag de photo | 3 pts/tag |
+| Vidéo | 7 pts/vidéo |
+| Légende (section "nouvelles photos") | 10 pts/légende |
+| Réponse à un avis | 1 pt |
+| Répondre à des questions | 3 pts/réponse |
+| Modification d'une fiche | 5 pts |
+| Ajout d'un lieu | 15 pts |
+| Contrôle d'informations | 1 pt/info vérifiée |
+
+**Score max réaliste par visite** : avis (20) + 3 photos taguées (24) + 1 vidéo (7) = **~51 pts**
+
+---
+
+## Stratégie de rédaction
+
+### Règle fondamentale
+Un avis doit **dépasser 200 caractères** pour déclencher le bonus (+10 pts). Viser 220–350 caractères : assez long pour le bonus, assez court pour être lu.
+
+### Structure optimale (5 éléments)
+1. **Contexte** — Type de visite, occasion (déj business, dîner romantique, passage touristique)
+2. **Point fort principal** — Ce qui se distingue vraiment (spécialité, accueil, ambiance, rapport qualité/prix)
+3. **Détail concret** — Un plat, un produit, un employé, un moment précis → crédibilise l'avis
+4. **Nuance honnête** — Une réserve mineure si pertinente (évite l'aspect publicitaire)
+5. **Recommandation** — À qui ? Dans quel contexte ?
+
+### Ton
+- Factuel et vivant, pas publicitaire
+- Première personne, expérience personnelle
+- Éviter les superlatifs vides ("incroyable", "fantastique") sans ancrage concret
+
+---
+
+## Protocole d'utilisation
+
+### Quand l'utilisateur donne peu d'infos
+Poser **3 questions max** en une fois :
+1. Quel établissement / type ? (restaurant, magasin, hôtel, artisan…)
+2. Expérience globale (note sur 5) ?
+3. 1–2 éléments marquants (positif ou négatif) ?
+
+### Quand l'utilisateur donne suffisamment d'infos
+Produire directement :
+- L'avis rédigé (≥ 220 caractères, prêt à copier-coller)
+- Le comptage de caractères
+- Les suggestions complémentaires pour maximiser les points (photos à prendre, tags recommandés)
+
+---
+
+## Templates par type d'établissement
+
+### Restaurant
+```
+[Contexte visite]. [Spécialité / plat commandé] : [description concrète].
+[Point sur l'accueil/ambiance]. [Nuance si pertinente].
+Idéal pour [profil/occasion]. [Note implicite ou conseil].
+```
+
+### Commerce / Magasin
+```
+[Raison de la visite]. [Produit/service trouvé] : [qualité, prix, dispo].
+[Accueil / expertise du personnel]. [Facilité d'accès / praticité].
+[Recommandation ciblée].
+```
+
+### Prestataire / Artisan
+```
+[Prestation demandée + contexte]. [Résultat concret].
+[Professionnalisme, ponctualité, communication]. [Rapport qualité/prix].
+[À qui je recommande].
+```
+
+### Hôtel / Hébergement
+```
+[Durée + type de séjour]. [Points forts chambre/équipements].
+[Service notable]. [Localisation / praticité].
+[Nuance éventuelle]. [Recommandation avec contexte].
+```
+
+---
+
+## Checklist avant livraison
+- [ ] ≥ 220 caractères (compter)
+- [ ] Expérience personnelle visible (pas générique)
+- [ ] Au moins 1 détail concret (plat, produit, nom du service, moment)
+- [ ] Pas de superlatifs non justifiés
+- [ ] Rappel photos/vidéo si pertinent pour maximiser les points
+
+---
+
+## Exemple complet
+
+**Input utilisateur** : "Restaurant thaï à Baillargues, très bien, bon pad thaï, service sympa, un peu bruyant"
+
+**Output :**
+> Déjeuner au calme (enfin presque — l'endroit est vivant aux heures de pointe). Le pad thaï est généreux et bien équilibré, avec des saveurs authentiques sans être édulcoré pour le goût occidental. Service souriant et rapide malgré l'affluence. Excellent rapport qualité/prix pour la région. À tester en semaine pour plus de tranquillité.
+
+*(237 caractères → 20 pts assurés)*
+
+**Suggestions complémentaires :**
+- 📸 Photo du pad thaï + tag "Cuisine thaïlandaise" → +8 pts
+- 📸 Photo de la salle + tag "Ambiance" → +8 pts
+- Total potentiel : **36 pts** pour cette seule visite

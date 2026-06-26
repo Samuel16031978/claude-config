@@ -16,17 +16,50 @@ claude-config/
         └── <skill>/SKILL.md
 ```
 
-## Skills perso
+## Skills perso (25)
 
+Source de vérité : `claude-global/skills/samuel/`. Synchronisés vers Claude Code et claude.ai par `skill-sync`.
+
+### Stratégie & business
 | Skill | Rôle |
 |-------|------|
-| [`ask-panel`](claude-global/skills/samuel/ask-panel/SKILL.md) | Panel des 4 IA (ChatGPT/Gemini/DeepSeek) via pont Notion, sans API |
-| [`balanced-samuel`](claude-global/skills/samuel/balanced-samuel/SKILL.md) | 5 modes d'analyse rapide (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC) |
-| [`first-principles-business`](claude-global/skills/samuel/first-principles-business/SKILL.md) | Raisonnement par premiers principes pour décisions business |
-| [`intervals-icu-samuel`](claude-global/skills/samuel/intervals-icu-samuel/SKILL.md) | Charge d'entraînement et séances via intervals.icu |
-| [`marketing-samuel`](claude-global/skills/samuel/marketing-samuel/SKILL.md) | Cadres marketing personnels |
-| [`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md) | La routine de parité Claude Code ↔ Claude AI |
-| [`training-adaptatif`](claude-global/skills/samuel/training-adaptatif/SKILL.md) | Plans d'entraînement adaptatifs |
+| `rodin` | Contradicteur intellectuel d'élite — déconstruction d'idées business |
+| `c-level-samuel` | Conseiller stratégique multi-projets (scaling, structuration, fiscalité…) |
+| `first-principles-business` | Raisonnement par premiers principes |
+| `saas-financial-samuel` | Modèles financiers, projections, valorisation |
+| `pitch-deck-samuel` | Pitch decks par objectif (investisseur, banque, client) |
+| `landing-page-samuel` | Landing pages haute conversion (11 sections) |
+| `lead-research-samuel` | Qualification & outreach de prospects |
+| `marketing-samuel` | Frameworks marketing (PAS/AIDA/BAB, channel matrix) |
+| `ai-transformation-samuel` | Diagnostic & déploiement IA (interne + offre conseil) |
+| `social-media-samuel` | Stratégie contenu (LinkedIn, YouTube, newsletter) |
+| `avis-google` | Avis Google optimisés (points Local Guide) |
+
+### RH & juridique
+| Skill | Rôle |
+|-------|------|
+| `rh-sc-renovations` | Expert RH BTP — droit du travail, procédures disciplinaires |
+| `rh-cv-apprenti-ia` | Analyse de CV pour recrutement profil IA/Tech |
+| `maitre-horizon` | Droit de la famille — divorce, régime matrimonial |
+| `aide-reponse-avocat` | Courriers de réponse à avocat (dossier de litige) |
+
+### Sport & santé
+| Skill | Rôle |
+|-------|------|
+| `training-adaptatif` | Plans d'entraînement adaptatifs (triathlon, running, cycling) |
+| `coach-mental-sport-samuel` | Coach mental profil tout-ou-rien |
+| `planning-expert` | Cohérence chronologique, tapers, récupérations, ACWR |
+| `intervals-icu-samuel` | Charge d'entraînement via intervals.icu |
+
+### Productivité & outils
+| Skill | Rôle |
+|-------|------|
+| `ask-panel` | Panel des 4 IA via pont Notion, sans API |
+| `balanced-samuel` | 5 modes d'analyse rapide (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC) |
+| `import-devis-monday` | Import devis PDF OBAT → board Monday Chantiers |
+| `notion-protocol` | Conventions d'écriture Notion (SNAPSHOT/LOG, texte brut) |
+| `skill-sync` | La routine de parité Claude Code ↔ Claude AI |
+| `session-notion-samuel` | _(déprécié → voir `skill-sync`)_ |
 
 ## Synchroniser les skills
 

@@ -13,16 +13,16 @@ claude-config/
 └── claude-global/                 # Outils et skills Claude Code
     ├── intervals_icu.py           # Client API intervals.icu
     ├── sync_skills.py             # Routine de sync des skills (GitHub ↔ Claude Code/AI)
-    └── skills/samuel/             # Skills perso de Samuel (source de vérité)
+    └── skills/samuel/             # 25 skills perso (source de vérité — liste complète dans README.md)
         ├── .sync-manifest.json    # Empreintes sha256 du dernier sync
-        ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
-        ├── balanced-samuel/       # 5 modes d'analyse (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC)
-        ├── first-principles-business/
-        ├── intervals-icu-samuel/  # Charge d'entraînement intervals.icu
-        ├── marketing-samuel/
         ├── skill-sync/            # Définition de la routine de sync
-        └── training-adaptatif/
+        ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
+        ├── intervals-icu-samuel/  # Charge d'entraînement intervals.icu
+        └── …                      # rodin, c-level-samuel, rh-sc-renovations, planning-expert, etc.
 ```
+
+> Les skills perso ont été rapatriés depuis le référentiel Notion (page `35734dfdcd3b8179b160fe16b555081a`).
+> `session-notion-samuel` est conservé comme stub déprécié (remplacé par `skill-sync`).
 
 > ⚠️ Casse unifiée en `samuel/` minuscule (l'ancien doublon `Samuel/` majuscule a été fusionné
 > pour éviter une collision de casse au clone sur macOS/Windows).

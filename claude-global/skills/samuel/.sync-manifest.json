@@ -1,11 +1,29 @@
 {
   "skills": {
+    "ai-transformation-samuel": "b69ae89ae98e1e717338b8f0df4526168460e5d907956475dfe0c6c11dd1ba48",
+    "aide-reponse-avocat": "2dbd93ac1918742b993341a50eef873404aa6218d824e0fe4ad08cb33c39aee5",
     "ask-panel": "fe15028496a48f7de946897698d0e3564719dc366fa9417cd79d4e7c2de3b03b",
+    "avis-google": "db3f40fbad1d4801b953db7c53e2fc5a8bb031a2e0130a0eea054f206e30e0a3",
     "balanced-samuel": "24866fb0b08ae1649921725ec1b704b810e8929f18707a61b90badc77d6f99f8",
+    "c-level-samuel": "54894af87eb2a4be633b14865fbac278a648af9d007ec0f1a91a7e7be86fc43f",
+    "coach-mental-sport-samuel": "846468d8cdce8d67e0ff09d36bba99d63b9a7a7c9c83b9b6463d80392a347e24",
     "first-principles-business": "c41eaf34517fb88715bfdbe67c54131455b1652d10f6dff76d2946ddc3af9cb9",
+    "import-devis-monday": "fff7a80f2bd05475542e931eb53919dab27a1a1e6e12f5a88a1200f42d22718d",
     "intervals-icu-samuel": "7b2dfed16e6ca68639a5e3a6b6daafc49da469dd5ca0c704f9a18b44b278cbe2",
+    "landing-page-samuel": "a5303b36abb6bc0e6c77f3fc1d43aefb518c4509c01400505b8f63a0966ed387",
+    "lead-research-samuel": "2618d348409903f861faa5537e51d01cdde0f34947fd59b864ba28af6e5c9ccb",
+    "maitre-horizon": "b43dc320bba7bc9c79505068a06e33bef45c1ed32b0f8712a0768d0c4bd823d0",
     "marketing-samuel": "614b77ac1893811f5374389700e7be47d46466a0f4fb25e392d98853649a8a4d",
-    "skill-sync": "6fb1a2f37916bd98d8c518a30bd0cf8ec7d760b66a4f49b735919d5a2b0d2560",
+    "notion-protocol": "c75c6fe3b630a3a038f93350cd1b5c217f979689303f7a8b862b12d828441476",
+    "pitch-deck-samuel": "67ee96180ed655e6325f34a251684372f351e8cd6e9d8560bd6521c7fbb85bb7",
+    "planning-expert": "3424997a7a1559299b8a64a490cc882a1167d5039e9071c2dc5662e527ff11dc",
+    "rh-cv-apprenti-ia": "e0f80b89c7c110aada94c5ce07c2419fdfd4348d3cfdd34bbac3f09b43b30092",
+    "rh-sc-renovations": "43c3dc2b9fc082a249f215ae398ad6baa1d9def6f66d58412ad0829c5338bace",
+    "rodin": "8720cb572052d39ee44e0e61c4e00f73681a5f41520c61a2e408af5d3ab11a2f",
+    "saas-financial-samuel": "170cccb47b3a37a5edd67f5b22297a7348577df7dd8e321be33e3a8c7798f00a",
+    "session-notion-samuel": "514033a11ec2e186c10b2a61c113c616419cb668ca019d15e0521859623eb1aa",
+    "skill-sync": "b66399d262a131398b28a0b5d87df9fd1d7ec60fbcbc1793466dded151213981",
+    "social-media-samuel": "e3f02d9e61ca9323a56a316b5ba6841a64c2dde0ce05d835a7b33410b2d7bb10",
     "training-adaptatif": "d4171fb5390e3d84f77f21adb6a899124a9112183c6bb79bc35353287634f2eb"
   }
 }
