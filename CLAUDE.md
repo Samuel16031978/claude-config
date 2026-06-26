@@ -1,4 +1,6 @@
-# CLAUDE.md — Projet-Test (Samuel Chembah)
+# CLAUDE.md — claude-config (Samuel Chembah)
+
+> Repo renommé `Projet-Test` → `claude-config`. Source de vérité unique des skills perso.
 
 ## Leçons apprises
 
@@ -7,12 +9,23 @@
 ## Structure du dépôt
 
 ```
-Projet-Test/
-├── nutritrack/          # Application mobile nutrition (Expo/React Native)
-└── claude-global/       # Outils et skills Claude Code
-    ├── intervals_icu.py                              # Client API intervals.icu
-    └── skills/samuel/intervals-icu-samuel/SKILL.md  # Définition du skill
+claude-config/
+└── claude-global/                 # Outils et skills Claude Code
+    ├── intervals_icu.py           # Client API intervals.icu
+    ├── sync_skills.py             # Routine de sync des skills (GitHub ↔ Claude Code/AI)
+    └── skills/samuel/             # 25 skills perso (source de vérité — liste complète dans README.md)
+        ├── .sync-manifest.json    # Empreintes sha256 du dernier sync
+        ├── skill-sync/            # Définition de la routine de sync
+        ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
+        ├── intervals-icu-samuel/  # Charge d'entraînement intervals.icu
+        └── …                      # rodin, c-level-samuel, rh-sc-renovations, planning-expert, etc.
 ```
+
+> Les skills perso ont été rapatriés depuis le référentiel Notion (page `35734dfdcd3b8179b160fe16b555081a`).
+> `session-notion-samuel` est conservé comme stub déprécié (remplacé par `skill-sync`).
+
+> ⚠️ Casse unifiée en `samuel/` minuscule (l'ancien doublon `Samuel/` majuscule a été fusionné
+> pour éviter une collision de casse au clone sur macOS/Windows).
 
 ## Configuration de l'environnement
 
@@ -59,3 +72,20 @@ python3 intervals_icu.py push_event --date 2026-06-01 --name "Run Z2" --descript
 - Toujours lire `wellness` avant tout calcul
 - Ne jamais pousser une séance sans confirmation explicite de Samuel
 - La clé API ne doit jamais être commitée dans git
+
+## Routine skill-sync (parité Claude Code ↔ Claude AI)
+
+GitHub (`claude-config`) est la **source de vérité unique** des skills perso. La routine garde
+les mêmes skills des deux côtés. Définition complète : `claude-global/skills/samuel/skill-sync/SKILL.md`.
+
+```bash
+cd claude-global
+python3 sync_skills.py status   # quels skills ont changé depuis le dernier sync ?
+python3 sync_skills.py bundle   # zippe les skills modifiés -> dist/skills/ (à importer dans claude.ai)
+python3 sync_skills.py commit-manifest   # fige l'état après un sync réussi
+python3 sync_skills.py install   # lie les skills (à plat) dans ~/.claude/skills pour Claude Code
+```
+
+- **Claude Code** : `install` (symlink) une fois, puis `git pull` suffit pour les mises à jour de contenu.
+- **claude.ai** : import manuel du `.zip` par skill modifié (Settings → Skills) — la routine liste lesquels.
+- `dist/` est gitignoré (bundles reconstructibles à la demande, jamais commités).

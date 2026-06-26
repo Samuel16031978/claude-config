@@ -1,0 +1,128 @@
+---
+name: skill-sync
+description: "Maintient la parité des skills perso de Samuel entre Claude Code et Claude AI (claude.ai), avec GitHub comme source de vérité unique. Détecte les skills modifiés, construit les bundles .zip à importer dans claude.ai, et écrit un rapport de sync. Déclencheurs : sync skills, synchroniser skills, parité Claude AI / Claude Code, routine sync, skill-sync."
+user-invocable: true
+allowed-tools:
+  - Read
+  - Bash
+  - mcp__github__get_file_contents
+  - mcp__github__push_files
+---
+
+# Skill Sync — parité des skills via GitHub
+
+## Rôle
+
+Garder **les mêmes skills perso entre Claude Code et Claude AI** (claude.ai / appli desktop).
+GitHub (`samuel16031978/claude-config`) est la **source de vérité unique** : toute modif de skill
+y est commitée, puis propagée vers les deux surfaces.
+
+```
+                ┌─────────────────────────────┐
+                │   GitHub  claude-config      │  ← SOURCE DE VÉRITÉ
+                │ claude-global/skills/samuel/ │
+                └──────────────┬──────────────┘
+                   git pull    │   bundle .zip
+              ┌────────────────┴────────────────┐
+              ▼                                  ▼
+   ┌────────────────────┐            ┌────────────────────────┐
+   │   Claude Code      │            │   Claude AI (claude.ai)│
+   │ ~/.claude/skills/  │            │  Settings → Skills     │
+   │  (auto: git pull)  │            │  (import .zip manuel)  │
+   └────────────────────┘            └────────────────────────┘
+```
+
+**Asymétrie clé :** Claude Code peut tirer automatiquement depuis GitHub (`git pull`).
+claude.ai **ne tire pas tout seul** depuis un repo : l'import d'un skill modifié reste un geste
+manuel (1 zip à déposer dans Settings → Skills). La routine automatise tout *sauf* ce dépôt,
+et produit la liste exacte des skills à ré-importer pour éviter de tout refaire à chaque fois.
+
+## Configuration
+
+| Clé | Valeur |
+|-----|--------|
+| Repo | `samuel16031978/claude-config` |
+| Branche | `main` |
+| Source des skills | `claude-global/skills/samuel/<skill>/` |
+| Manifeste de dérive | `claude-global/skills/samuel/.sync-manifest.json` |
+| Bundles générés | `claude-global/dist/skills/<skill>.zip` (gitignoré) |
+| Helper | `claude-global/sync_skills.py` |
+
+> Aucun token, aucune clé API n'est nécessaire ni stocké ici. Le push GitHub passe par le MCP
+> GitHub (ou `git push` si exécuté en local).
+
+## Helper `sync_skills.py`
+
+```bash
+cd claude-global
+python3 sync_skills.py status           # liste les skills + détecte les modifs (hash vs manifeste)
+python3 sync_skills.py bundle           # zippe uniquement les skills modifiés -> dist/skills/
+python3 sync_skills.py bundle --all     # zippe les 6 skills
+python3 sync_skills.py commit-manifest  # fige l'état courant dans le manifeste (après un sync réussi)
+python3 sync_skills.py install          # lie les skills dans ~/.claude/skills (Claude Code les voit)
+```
+
+La détection repose sur un **sha256 du contenu** de chaque dossier skill (pas les dates, qui
+mentent après un clone). Le manifeste versionné mémorise le dernier état synchronisé.
+
+## Protocole de la routine (exécution autonome)
+
+1. **Sync** — `git pull origin main` (récupère les dernières modifs de skills).
+2. **Détecter** — `python3 claude-global/sync_skills.py status`. Si « synchro » → étape 6 (rien à faire).
+3. **Empaqueter** — `python3 claude-global/sync_skills.py bundle` (zippe les skills modifiés).
+4. **Rapport** — écrire `reports/skills-sync-<YYYY-MM-DD>.md` listant :
+   - les skills modifiés depuis le dernier sync,
+   - pour chacun, l'action : « ré-importer `dist/skills/<skill>.zip` dans claude.ai → Settings → Skills »,
+   - les skills supprimés (à retirer aussi de claude.ai).
+5. **Figer + pousser** — `commit-manifest`, puis commit `sync: skills <date> (<N> modifiés)` avec
+   le manifeste à jour + le rapport. Pousser sur `main`.
+6. **Confirmer** — afficher le résumé (skills à jour, ou liste des zips à ré-importer côté claude.ai).
+
+> Côté **Claude Code** : aucune action manuelle si l'installation locale (ci-dessous) a été
+> faite **en mode symlink** — le `git pull` de l'étape 1 met alors le contenu à jour tout seul.
+> En mode copie, relancer `sync_skills.py install --copy` après le pull.
+
+## Prompt de la routine (à coller dans Claude Code → Routines)
+
+```
+Synchronise mes skills perso. Étapes :
+1. git pull origin main
+2. cd claude-global && python3 sync_skills.py status
+3. Si des skills sont modifiés : python3 sync_skills.py bundle, puis écris
+   reports/skills-sync-<date>.md avec la liste des .zip à ré-importer dans claude.ai.
+4. python3 sync_skills.py commit-manifest
+5. Commit (manifeste + rapport) et push sur main.
+6. Dis-moi quels zip ré-importer dans claude.ai (Settings → Skills), ou « tout est synchro ».
+Ne committe jamais dist/ (gitignoré) ni aucun secret.
+```
+
+## Installation locale & mise à jour de Claude Code
+
+Claude Code lit les skills **à plat** : `~/.claude/skills/<skill>/SKILL.md`. La commande
+`install` crée donc un lien (ou une copie) **par skill**, pas un lien du dossier `samuel/` entier.
+
+```bash
+cd claude-global
+python3 sync_skills.py install        # symlink (recommandé) : ~/.claude/skills/<skill> -> repo
+python3 sync_skills.py install --copy # copie autonome (si tu ne veux pas de liens)
+```
+
+**Comment Claude Code est mis à jour ensuite — deux régimes :**
+
+| Mode | Setup (une fois) | Mise à jour après une modif sur GitHub |
+|------|------------------|----------------------------------------|
+| **symlink** (défaut) | `install` | `git pull` **suffit** — le lien reflète le repo en direct |
+| **copie** | `install --copy` | `git pull` **puis** `install --copy` pour recopier |
+
+Le seul cas qui exige de relancer `install` en mode symlink : l'**ajout** d'un nouveau skill
+(il lui faut son propre lien). Une simple modif de contenu d'un skill déjà lié est, elle,
+visible immédiatement après le `git pull`.
+
+## Règles
+
+- **GitHub est la seule source de vérité** : on ne modifie un skill que dans le repo, jamais
+  directement dans claude.ai (sinon la modif est perdue au prochain sync).
+- Ne jamais committer `dist/`, `.env.local`, ni aucun token/secret.
+- Un skill modifié = un seul geste manuel : ré-importer son zip dans claude.ai.
+- En cas d'erreur sur un skill : continuer les autres, lister les échecs dans le rapport.
+- Format du commit : `sync: skills <YYYY-MM-DD> (<N> modifiés)`.

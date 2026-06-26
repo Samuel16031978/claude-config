@@ -1,79 +1,77 @@
----
-name: balanced-samuel
-description: "5 modes : TLDR / STEELMAN / DECISION / AUDIT / SOCRATIC. Complément de Rodin pour analyses rapides multi-formats."
----
+# claude-config
 
-# Balanced Samuel — Modes d'analyse rapide
+Configuration Claude Code de Samuel Chembah et **source de vérité unique** de ses skills perso.
+Ces skills sont maintenus identiques entre **Claude Code** et **Claude AI** (claude.ai) via la
+routine [`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md), avec GitHub au centre.
 
-## Sélection de mode
+## Structure
 
-| Commande | Mode | Usage |
-|----------|------|-------|
-| `/tldr` | TLDR | Résumé ultra-court, l'essentiel en 3 bullets |
-| `/steelman` | STEELMAN | Meilleure version possible d'un argument adverse |
-| `/decision` | DECISION | Arbre de décision structuré avec critères |
-| `/audit` | AUDIT | Analyse critique : forces, faiblesses, risques |
-| `/socratic` | SOCRATIC | Questionnement socratique pour clarifier la pensée |
-
-## Templates par mode
-
-### TLDR
 ```
-**En bref :**
-- [Point 1]
-- [Point 2]
-- [Point 3]
-
-**Action clé :** [une phrase]
+claude-config/
+└── claude-global/
+    ├── intervals_icu.py        # Client API intervals.icu
+    ├── sync_skills.py          # Routine de sync des skills (status / bundle / commit-manifest)
+    └── skills/samuel/          # Skills perso (source de vérité)
+        ├── .sync-manifest.json # Empreintes sha256 du dernier sync
+        └── <skill>/SKILL.md
 ```
 
-### STEELMAN
+## Skills perso (25)
+
+Source de vérité : `claude-global/skills/samuel/`. Synchronisés vers Claude Code et claude.ai par `skill-sync`.
+
+### Stratégie & business
+| Skill | Rôle |
+|-------|------|
+| `rodin` | Contradicteur intellectuel d'élite — déconstruction d'idées business |
+| `c-level-samuel` | Conseiller stratégique multi-projets (scaling, structuration, fiscalité…) |
+| `first-principles-business` | Raisonnement par premiers principes |
+| `saas-financial-samuel` | Modèles financiers, projections, valorisation |
+| `pitch-deck-samuel` | Pitch decks par objectif (investisseur, banque, client) |
+| `landing-page-samuel` | Landing pages haute conversion (11 sections) |
+| `lead-research-samuel` | Qualification & outreach de prospects |
+| `marketing-samuel` | Frameworks marketing (PAS/AIDA/BAB, channel matrix) |
+| `ai-transformation-samuel` | Diagnostic & déploiement IA (interne + offre conseil) |
+| `social-media-samuel` | Stratégie contenu (LinkedIn, YouTube, newsletter) |
+| `avis-google` | Avis Google optimisés (points Local Guide) |
+
+### RH & juridique
+| Skill | Rôle |
+|-------|------|
+| `rh-sc-renovations` | Expert RH BTP — droit du travail, procédures disciplinaires |
+| `rh-cv-apprenti-ia` | Analyse de CV pour recrutement profil IA/Tech |
+| `maitre-horizon` | Droit de la famille — divorce, régime matrimonial |
+| `aide-reponse-avocat` | Courriers de réponse à avocat (dossier de litige) |
+
+### Sport & santé
+| Skill | Rôle |
+|-------|------|
+| `training-adaptatif` | Plans d'entraînement adaptatifs (triathlon, running, cycling) |
+| `coach-mental-sport-samuel` | Coach mental profil tout-ou-rien |
+| `planning-expert` | Cohérence chronologique, tapers, récupérations, ACWR |
+| `intervals-icu-samuel` | Charge d'entraînement via intervals.icu |
+
+### Productivité & outils
+| Skill | Rôle |
+|-------|------|
+| `ask-panel` | Panel des 4 IA via pont Notion, sans API |
+| `balanced-samuel` | 5 modes d'analyse rapide (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC) |
+| `import-devis-monday` | Import devis PDF OBAT → board Monday Chantiers |
+| `notion-protocol` | Conventions d'écriture Notion (SNAPSHOT/LOG, texte brut) |
+| `skill-sync` | La routine de parité Claude Code ↔ Claude AI |
+| `session-notion-samuel` | _(déprécié → voir `skill-sync`)_ |
+
+## Synchroniser les skills
+
+```bash
+cd claude-global
+python3 sync_skills.py status   # quels skills ont changé depuis le dernier sync ?
+python3 sync_skills.py bundle   # zippe les skills modifiés -> dist/skills/ (import claude.ai)
+python3 sync_skills.py commit-manifest   # fige l'état après un sync réussi
+python3 sync_skills.py install   # lie les skills (à plat) dans ~/.claude/skills pour Claude Code
 ```
-**Argument adverse, version la plus forte :**
-[Reformulation honnête et rigoureuse]
 
-**Ce qui est solide :** [éléments valides]
-**Ce que ça implique :** [conséquences logiques]
-```
+- **Claude Code** : `install` une fois (symlink par skill), puis `git pull` suffit pour mettre à jour le contenu.
+- **claude.ai** : import manuel du `.zip` par skill modifié (Settings → Skills).
 
-### DECISION
-```
-**Critères de décision :**
-1. [Critère 1] — poids : [X]
-2. [Critère 2] — poids : [X]
-
-**Options :**
-| Option | Critère 1 | Critère 2 | Score |
-|--------|-----------|-----------|-------|
-| A | ... | ... | ... |
-| B | ... | ... | ... |
-
-**Recommandation :** [Option + justification courte]
-```
-
-### AUDIT
-```
-**Forces :** [liste]
-**Faiblesses :** [liste]
-**Opportunités :** [liste]
-**Risques :** [liste]
-
-**Verdict :** [1 phrase]
-```
-
-### SOCRATIC
-```
-**Questions pour clarifier :**
-1. [Question fondamentale]
-2. [Question sur les hypothèses]
-3. [Question sur les conséquences]
-
-**Ce que la réponse révèle :** [observation]
-```
-
-## Règles globales
-
-- Toujours répondre dans le format du mode activé
-- Pas de préambule : entrer directement dans le mode
-- Si aucun mode n'est sélectionné, demander lequel utiliser
-- Compatible avec Rodin pour approfondir après un audit rapide
+Détails et prompt de routine : [`skill-sync/SKILL.md`](claude-global/skills/samuel/skill-sync/SKILL.md).
