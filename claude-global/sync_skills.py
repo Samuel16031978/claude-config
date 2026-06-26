@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import zipfile
@@ -112,13 +113,14 @@ def _install_one(link: Path, source: Path, copy: bool) -> str:
 
 
 def cmd_install(args: argparse.Namespace) -> int:
+    use_copy = args.copy or os.name == "nt"
     target_root = Path(args.target).expanduser() if args.target else CLAUDE_SKILLS_DIR
     target_root.mkdir(parents=True, exist_ok=True)
     skills = iter_skill_dirs()
     for skill_dir in skills:
-        state = _install_one(target_root / skill_dir.name, skill_dir, args.copy)
+        state = _install_one(target_root / skill_dir.name, skill_dir, use_copy)
         print(f"  {state:22} {skill_dir.name}")
-    mode = "copie" if args.copy else "symlink"
+    mode = "copie" if use_copy else "symlink"
     print(f"\n{len(skills)} skills installés vers {target_root} ({mode}).")
     return 0
 
