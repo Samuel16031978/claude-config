@@ -16,6 +16,7 @@ claude-config/
     └── skills/samuel/             # Skills perso de Samuel (source de vérité)
         ├── .sync-manifest.json    # Empreintes sha256 du dernier sync
         ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
+        ├── balanced-samuel/       # 5 modes d'analyse (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC)
         ├── first-principles-business/
         ├── intervals-icu-samuel/  # Charge d'entraînement intervals.icu
         ├── marketing-samuel/

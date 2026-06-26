@@ -1,79 +1,43 @@
----
-name: balanced-samuel
-description: "5 modes : TLDR / STEELMAN / DECISION / AUDIT / SOCRATIC. Complément de Rodin pour analyses rapides multi-formats."
----
+# claude-config
 
-# Balanced Samuel — Modes d'analyse rapide
+Configuration Claude Code de Samuel Chembah et **source de vérité unique** de ses skills perso.
+Ces skills sont maintenus identiques entre **Claude Code** et **Claude AI** (claude.ai) via la
+routine [`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md), avec GitHub au centre.
 
-## Sélection de mode
+## Structure
 
-| Commande | Mode | Usage |
-|----------|------|-------|
-| `/tldr` | TLDR | Résumé ultra-court, l'essentiel en 3 bullets |
-| `/steelman` | STEELMAN | Meilleure version possible d'un argument adverse |
-| `/decision` | DECISION | Arbre de décision structuré avec critères |
-| `/audit` | AUDIT | Analyse critique : forces, faiblesses, risques |
-| `/socratic` | SOCRATIC | Questionnement socratique pour clarifier la pensée |
-
-## Templates par mode
-
-### TLDR
 ```
-**En bref :**
-- [Point 1]
-- [Point 2]
-- [Point 3]
-
-**Action clé :** [une phrase]
+claude-config/
+└── claude-global/
+    ├── intervals_icu.py        # Client API intervals.icu
+    ├── sync_skills.py          # Routine de sync des skills (status / bundle / commit-manifest)
+    └── skills/samuel/          # Skills perso (source de vérité)
+        ├── .sync-manifest.json # Empreintes sha256 du dernier sync
+        └── <skill>/SKILL.md
 ```
 
-### STEELMAN
-```
-**Argument adverse, version la plus forte :**
-[Reformulation honnête et rigoureuse]
+## Skills perso
 
-**Ce qui est solide :** [éléments valides]
-**Ce que ça implique :** [conséquences logiques]
-```
+| Skill | Rôle |
+|-------|------|
+| [`ask-panel`](claude-global/skills/samuel/ask-panel/SKILL.md) | Panel des 4 IA (ChatGPT/Gemini/DeepSeek) via pont Notion, sans API |
+| [`balanced-samuel`](claude-global/skills/samuel/balanced-samuel/SKILL.md) | 5 modes d'analyse rapide (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC) |
+| [`first-principles-business`](claude-global/skills/samuel/first-principles-business/SKILL.md) | Raisonnement par premiers principes pour décisions business |
+| [`intervals-icu-samuel`](claude-global/skills/samuel/intervals-icu-samuel/SKILL.md) | Charge d'entraînement et séances via intervals.icu |
+| [`marketing-samuel`](claude-global/skills/samuel/marketing-samuel/SKILL.md) | Cadres marketing personnels |
+| [`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md) | La routine de parité Claude Code ↔ Claude AI |
+| [`training-adaptatif`](claude-global/skills/samuel/training-adaptatif/SKILL.md) | Plans d'entraînement adaptatifs |
 
-### DECISION
-```
-**Critères de décision :**
-1. [Critère 1] — poids : [X]
-2. [Critère 2] — poids : [X]
+## Synchroniser les skills
 
-**Options :**
-| Option | Critère 1 | Critère 2 | Score |
-|--------|-----------|-----------|-------|
-| A | ... | ... | ... |
-| B | ... | ... | ... |
-
-**Recommandation :** [Option + justification courte]
+```bash
+cd claude-global
+python3 sync_skills.py status   # quels skills ont changé depuis le dernier sync ?
+python3 sync_skills.py bundle   # zippe les skills modifiés -> dist/skills/ (import claude.ai)
+python3 sync_skills.py commit-manifest   # fige l'état après un sync réussi
 ```
 
-### AUDIT
-```
-**Forces :** [liste]
-**Faiblesses :** [liste]
-**Opportunités :** [liste]
-**Risques :** [liste]
+- **Claude Code** : `git pull` suffit (lier `~/.claude/skills/samuel` au repo, voir le skill).
+- **claude.ai** : import manuel du `.zip` par skill modifié (Settings → Skills).
 
-**Verdict :** [1 phrase]
-```
-
-### SOCRATIC
-```
-**Questions pour clarifier :**
-1. [Question fondamentale]
-2. [Question sur les hypothèses]
-3. [Question sur les conséquences]
-
-**Ce que la réponse révèle :** [observation]
-```
-
-## Règles globales
-
-- Toujours répondre dans le format du mode activé
-- Pas de préambule : entrer directement dans le mode
-- Si aucun mode n'est sélectionné, demander lequel utiliser
-- Compatible avec Rodin pour approfondir après un audit rapide
+Détails et prompt de routine : [`skill-sync/SKILL.md`](claude-global/skills/samuel/skill-sync/SKILL.md).
