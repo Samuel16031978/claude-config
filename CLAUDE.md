@@ -5,6 +5,8 @@
 ## Leçons apprises
 
 - 2026-06-26 connecteurs/intégrations : toujours vérifier (recherche web) qu'un connecteur existe réellement avant de l'inscrire dans une architecture — ne pas supposer. Ex : Gemini n'a aucun connecteur Notion grand public (relais copier-coller manuel), DeepSeek passe par Notion AI.
+- 2026-06-27 sécurité : le skill `skill-sync-notion` (édité dans claude.ai) contenait un **token OAuth Anthropic et un token Notion en clair**. Rédigés avant tout commit, remplacés par des variables d'env. **Règle : jamais de token en dur dans un SKILL.md ; scanner avant chaque commit.** Tokens exposés → à révoquer/régénérer.
+- 2026-06-27 sens de sync : Samuel édite ses skills **dans claude.ai**, pas dans GitHub. Le sens réel est **claude.ai → GitHub → Claude Code**. Le helper `status` ne compare que repo↔manifeste : il ne « voit » pas claude.ai et peut donc afficher un faux « synchro ».
 
 ## Structure du dépôt
 
@@ -13,16 +15,17 @@ claude-config/
 └── claude-global/                 # Outils et skills Claude Code
     ├── intervals_icu.py           # Client API intervals.icu
     ├── sync_skills.py             # Routine de sync des skills (GitHub ↔ Claude Code/AI)
-    └── skills/samuel/             # 25 skills perso (source de vérité — liste complète dans README.md)
+    └── skills/samuel/             # 29 skills perso (liste complète dans README.md)
         ├── .sync-manifest.json    # Empreintes sha256 du dernier sync
-        ├── skill-sync/            # Définition de la routine de sync
+        ├── skill-sync/            # Routine de parité via GitHub
         ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
         ├── intervals-icu-samuel/  # Charge d'entraînement intervals.icu
-        └── …                      # rodin, c-level-samuel, rh-sc-renovations, planning-expert, etc.
+        └── …                      # rodin, stratege, ressources-humaines, planificateur, etc.
 ```
 
-> Les skills perso ont été rapatriés depuis le référentiel Notion (page `35734dfdcd3b8179b160fe16b555081a`).
-> `session-notion-samuel` est conservé comme stub déprécié (remplacé par `skill-sync`).
+> ⚠️ **Source canonique = claude.ai** (Samuel y travaille). Le sens réel de synchro est
+> **claude.ai → GitHub → Claude Code**, pas l'inverse. Les noms ont été refactorés en FR dans
+> claude.ai (juin 2026) ; GitHub a été réaligné dessus (reverse sync).
 
 > ⚠️ Casse unifiée en `samuel/` minuscule (l'ancien doublon `Samuel/` majuscule a été fusionné
 > pour éviter une collision de casse au clone sur macOS/Windows).

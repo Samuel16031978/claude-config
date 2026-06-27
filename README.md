@@ -1,8 +1,9 @@
 # claude-config
 
-Configuration Claude Code de Samuel Chembah et **source de vérité unique** de ses skills perso.
-Ces skills sont maintenus identiques entre **Claude Code** et **Claude AI** (claude.ai) via la
-routine [`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md), avec GitHub au centre.
+Configuration Claude Code de Samuel Chembah et **miroir versionné** de ses skills perso.
+Samuel édite ses skills dans **claude.ai** (source canonique) ; GitHub les versionne et alimente
+**Claude Code**. Sens de synchro réel : **claude.ai → GitHub → Claude Code** (voir
+[`skill-sync`](claude-global/skills/samuel/skill-sync/SKILL.md)).
 
 ## Structure
 
@@ -16,50 +17,55 @@ claude-config/
         └── <skill>/SKILL.md
 ```
 
-## Skills perso (25)
+## Skills perso (29)
 
-Source de vérité : `claude-global/skills/samuel/`. Synchronisés vers Claude Code et claude.ai par `skill-sync`.
+Source canonique : **claude.ai** (Samuel y travaille et y refactore ses skills). GitHub en est le
+miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en français (juin 2026).
 
 ### Stratégie & business
 | Skill | Rôle |
 |-------|------|
-| `rodin` | Contradicteur intellectuel d'élite — déconstruction d'idées business |
-| `c-level-samuel` | Conseiller stratégique multi-projets (scaling, structuration, fiscalité…) |
+| `rodin` | Contradicteur épistémique — autopsie profonde, décisions à fort enjeu |
+| `contradicteur` | Contradicteur rapide multi-modes, faible enjeu (complément de Rodin) |
+| `stratege` | Conseiller stratégique multi-projets (scaling, structuration, fiscalité…) |
 | `first-principles-business` | Raisonnement par premiers principes |
-| `saas-financial-samuel` | Modèles financiers, projections, valorisation |
-| `pitch-deck-samuel` | Pitch decks par objectif (investisseur, banque, client) |
-| `landing-page-samuel` | Landing pages haute conversion (11 sections) |
-| `lead-research-samuel` | Qualification & outreach de prospects |
-| `marketing-samuel` | Frameworks marketing (PAS/AIDA/BAB, channel matrix) |
-| `ai-transformation-samuel` | Diagnostic & déploiement IA (interne + offre conseil) |
-| `social-media-samuel` | Stratégie contenu (LinkedIn, YouTube, newsletter) |
+| `modelisation-financiere` | Modèles financiers, projections, valorisation |
+| `presentation-investisseur` | Pitch decks par objectif (investisseur, banque, client) |
+| `page-de-vente` | Landing pages haute conversion |
+| `recherche-leads` | Qualification & outreach de prospects |
+| `marketing` | Frameworks marketing (PAS/AIDA/BAB, channel matrix) |
+| `expert-automatisation` | Diagnostic & déploiement IA (interne + offre conseil) |
+| `reseaux-sociaux` | Stratégie contenu (LinkedIn, YouTube, newsletter) |
 | `avis-google` | Avis Google optimisés (points Local Guide) |
+| `balanced-samuel` | 5 modes d'analyse rapide _(à arbitrer : recouvre `contradicteur`)_ |
 
 ### RH & juridique
 | Skill | Rôle |
 |-------|------|
-| `rh-sc-renovations` | Expert RH BTP — droit du travail, procédures disciplinaires |
+| `ressources-humaines` | Expert RH BTP — droit du travail, procédures disciplinaires |
 | `rh-cv-apprenti-ia` | Analyse de CV pour recrutement profil IA/Tech |
-| `maitre-horizon` | Droit de la famille — divorce, régime matrimonial |
-| `aide-reponse-avocat` | Courriers de réponse à avocat (dossier de litige) |
+| `divorce-patrimoine` | Droit de la famille — divorce, régime matrimonial |
+| `aide-reponse-avocat` | Contentieux commercial & chantier (réponses à avocat adverse) |
 
 ### Sport & santé
 | Skill | Rôle |
 |-------|------|
-| `training-adaptatif` | Plans d'entraînement adaptatifs (triathlon, running, cycling) |
-| `coach-mental-sport-samuel` | Coach mental profil tout-ou-rien |
-| `planning-expert` | Cohérence chronologique, tapers, récupérations, ACWR |
+| `training-ironman-2026` | Plans d'entraînement adaptatifs (triathlon, running, cycling) |
+| `coach-mental-sport` | Coach mental profil tout-ou-rien |
+| `coach-premier-marathon` | Coach course à pied, grande débutante (run/walk) |
+| `planificateur` | Cohérence chronologique, tapers, récupérations, ACWR |
 | `intervals-icu-samuel` | Charge d'entraînement via intervals.icu |
 
 ### Productivité & outils
 | Skill | Rôle |
 |-------|------|
 | `ask-panel` | Panel des 4 IA via pont Notion, sans API |
-| `balanced-samuel` | 5 modes d'analyse rapide (TLDR/STEELMAN/DECISION/AUDIT/SOCRATIC) |
+| `checkpoint` | Génère un fichier de reprise de session |
 | `import-devis-monday` | Import devis PDF OBAT → board Monday Chantiers |
 | `notion-protocol` | Conventions d'écriture Notion (SNAPSHOT/LOG, texte brut) |
-| `skill-sync` | La routine de parité Claude Code ↔ Claude AI |
-| `session-notion-samuel` | _(déprécié → voir `skill-sync`)_ |
+| `session-notion` | Work log automatique des sessions vers Notion |
+| `skill-sync` | Routine de parité des skills via GitHub |
+| `skill-sync-notion` | Sync Notion ↔ GitHub après MAJ d'un skill (tokens en env, jamais en dur) |
 
 ## Synchroniser les skills
 
