@@ -17,7 +17,7 @@ claude-config/
         └── <skill>/SKILL.md
 ```
 
-## Skills perso (29)
+## Skills perso (28)
 
 Source canonique : **claude.ai** (Samuel y travaille et y refactore ses skills). GitHub en est le
 miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en français (juin 2026).
@@ -37,7 +37,6 @@ miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en
 | `expert-automatisation` | Diagnostic & déploiement IA (interne + offre conseil) |
 | `reseaux-sociaux` | Stratégie contenu (LinkedIn, YouTube, newsletter) |
 | `avis-google` | Avis Google optimisés (points Local Guide) |
-| `balanced-samuel` | 5 modes d'analyse rapide _(à arbitrer : recouvre `contradicteur`)_ |
 
 ### RH & juridique
 | Skill | Rôle |

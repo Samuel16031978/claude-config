@@ -15,7 +15,7 @@ claude-config/
 └── claude-global/                 # Outils et skills Claude Code
     ├── intervals_icu.py           # Client API intervals.icu
     ├── sync_skills.py             # Routine de sync des skills (GitHub ↔ Claude Code/AI)
-    └── skills/samuel/             # 29 skills perso (liste complète dans README.md)
+    └── skills/samuel/             # 28 skills perso (liste complète dans README.md)
         ├── .sync-manifest.json    # Empreintes sha256 du dernier sync
         ├── skill-sync/            # Routine de parité via GitHub
         ├── ask-panel/             # Panel des 4 IA (via pont Notion, sans API)
