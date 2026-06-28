@@ -33,16 +33,28 @@ Script   : claude-global/youtube_scraper.py
 Profil   : claude-global/.claude/memory/scoring-profile.md  (méthodologie)
 Listes   : claude-global/data/youtube-scrapes/projets-samuel.json  (source unique AXE 3/4)
 Optionnel: .env.local → GITHUB_TOKEN (5000 req/h vs 60), YOUTUBE_API_KEY
+Membres  : .env.local → YOUTUBE_COOKIES=cookies.txt (ou YOUTUBE_COOKIES_FROM_BROWSER=chrome)
+           → débloque la transcription des vidéos non-publiques (membres / non répertoriées)
 Dépendance: yt-dlp (pip install -r requirements.txt) — requis pour `scrape` uniquement
 ```
+
+### Vidéos publiques vs non-publiques
+
+`--max N` compte les vidéos **publiques** retenues, dans l'ordre « plus récentes d'abord ». Les vidéos
+**non-publiques** (membres / non répertoriées, `availability ≠ public`) ne volent pas de slot et ne décalent
+pas le classement : elles sont listées à part sous `videos_non_publiques` — **souvent le contenu le plus
+pointu**. Pour les analyser : cookies authentifiés (transcription complète) ou `--include-hidden`
+(titre + description seulement). Si YouTube renvoie `status: throttle` (métadonnées dégradées,
+fréquent sans runtime JS), réessaie plus tard, plus espacé, ou avec des cookies.
 
 ## Opérations disponibles
 
 ### 1. Scraper une chaîne (découverte + scoring)
 ```bash
-python3 youtube_scraper.py scrape <channel_url> [--max N] [--refresh]
+python3 youtube_scraper.py scrape <channel_url> [--max N] [--refresh] [--include-hidden]
 ```
 Extrait les vidéos → repos GitHub → score chaque repo /100 → maj manifest. `--refresh` ignore le cache.
+`--include-hidden` analyse aussi les vidéos non-publiques (sinon listées à part).
 
 ### 2. Résumé du dernier scrape
 ```bash

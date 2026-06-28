@@ -16,7 +16,8 @@ Usage :
     python3 youtube_scraper.py score <github_url> [--refresh]
 
 Dépendance optionnelle : yt-dlp (uniquement pour scrape). pip install -r requirements.txt
-Clés optionnelles dans .env.local : GITHUB_TOKEN (5000 req/h), YOUTUBE_API_KEY.
+Clés optionnelles dans .env.local : GITHUB_TOKEN (5000 req/h), YOUTUBE_API_KEY,
+YOUTUBE_COOKIES (chemin cookies.txt) ou YOUTUBE_COOKIES_FROM_BROWSER (débloque les vidéos membres).
 """
 
 from __future__ import annotations
@@ -40,6 +41,9 @@ PROJETS_FILE = os.path.join(DATA_DIR, "projets-samuel.json")
 USER_AGENT = "Mozilla/5.0 (compatible; youtube-scraper-samuel/1.0)"
 GITHUB_API = "https://api.github.com"
 CACHE_TTL_DAYS = 14
+MAX_HIDDEN_SCAN = 12   # borne le scan quand des vidéos non-publiques s'intercalent (évite le throttle YouTube)
+DETAIL_SLEEP = 3.0     # pause entre extractions vidéo : sous ~3s YouTube throttle et availability devient null
+THROTTLE_STREAK = 5    # N availability=None d'affilée → throttle probable, on bail (les vidéos publiques resettent)
 
 YOUTUBE_URL_RE = re.compile(
     r"^https?://(www\.)?(youtube\.com/(@[\w\-.]+|channel/[\w\-]+|c/[\w\-.]+)|youtu\.be/[\w\-]+)"
@@ -404,6 +408,19 @@ def _check_ytdlp():
         raise SystemExit("❌ yt-dlp manquant — installe avec : pip install -r requirements.txt")
 
 
+def _yt_auth_opts():
+    """Auth yt-dlp optionnelle (.env.local) — débloque les vidéos non-publiques (membres).
+    YOUTUBE_COOKIES=chemin/cookies.txt  ou  YOUTUBE_COOKIES_FROM_BROWSER=chrome|firefox|brave…
+    Les cookies restent locaux (gitignorés) et ne sont jamais loggés."""
+    cookie_file = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    if cookie_file and os.path.isfile(cookie_file):
+        return {"cookiefile": cookie_file}
+    browser = os.environ.get("YOUTUBE_COOKIES_FROM_BROWSER", "").strip()
+    if browser:
+        return {"cookiesfrombrowser": (browser,)}
+    return {}
+
+
 def _fetch_transcript(info):
     caps = info.get("automatic_captions") or info.get("subtitles") or {}
     for lang in ("fr", "fr-FR", "en", "en-US"):
@@ -489,17 +506,26 @@ def cmd_scrape(args):
     repos_scored = _read_json(REPOS_FILE, {})
     tools_index = _read_json(TOOLS_FILE, {})
 
-    flat_opts = {"extract_flat": True, "quiet": True, "skip_download": True}
+    auth = _yt_auth_opts()
+    flat_opts = {"extract_flat": True, "quiet": True, "skip_download": True, **auth}
     with yt_dlp.YoutubeDL(flat_opts) as ydl:
         chan = ydl.extract_info(_videos_tab_url(url), download=False)
-    entries = [e for e in _flatten_entries(chan) if e.get("id")][: args.max]
+    all_entries = [e for e in _flatten_entries(chan) if e.get("id")]
     chan_name = chan.get("uploader") or re.sub(r"\s*-\s*Videos$", "", chan.get("title") or "channel")
     slug = _slug(chan_name)
 
-    videos, repo_urls_seen, partial = [], set(), False
-    detail_opts = {"quiet": True, "skip_download": True, "writeautomaticsub": True,
-                   "ignoreerrors": True}
-    for entry in entries:
+    videos, repo_urls_seen, partial, non_publiques = [], set(), False, []
+    none_streak = 0
+    detail_opts = {"quiet": True, "skip_download": True, "ignoreerrors": True, **auth}
+    for i, entry in enumerate(all_entries):
+        # --max compte les vidéos publiques retenues, pas les entrées brutes : une vidéo
+        # membres-only en tête ne doit pas voler un slot ni décaler le classement public.
+        if len(videos) >= args.max or len(non_publiques) >= MAX_HIDDEN_SCAN:
+            break
+        if none_streak >= THROTTLE_STREAK:
+            break  # série de métadonnées indéterminées → throttle, inutile de continuer à marteler
+        if i:
+            time.sleep(DETAIL_SLEEP)
         vid = entry.get("id")
         try:
             with yt_dlp.YoutubeDL(detail_opts) as ydl:
@@ -507,6 +533,22 @@ def cmd_scrape(args):
         except yt_dlp.utils.DownloadError:
             continue
         if not info:
+            continue
+        # availability != "public" → vidéo réservée aux membres / non répertoriée.
+        # On ne la jette pas (potentiellement la plus intéressante) : on la signale à part,
+        # et on la note pleinement seulement si --include-hidden (sous-titres rarement accessibles).
+        none_streak = none_streak + 1 if info.get("availability") is None else 0
+        is_public = info.get("availability") == "public"
+        if not is_public and not args.include_hidden:
+            non_publiques.append({
+                "id": vid, "title": info.get("title"), "url": f"https://youtu.be/{vid}",
+                "upload_date": info.get("upload_date"),
+                "availability": info.get("availability"),
+                "note": "🔒 non-publique (membres/non répertoriée) — souvent le contenu le plus pointu. "
+                        "Pour l'analyser à fond : ajoute YOUTUBE_COOKIES=cookies.txt dans .env.local "
+                        "(session authentifiée → transcription accessible), ou relance avec --include-hidden "
+                        "pour au moins le titre + la description.",
+            })
             continue
         transcript = _fetch_transcript(info)
         desc = info.get("description") or ""
@@ -518,6 +560,7 @@ def cmd_scrape(args):
         videos.append({
             "id": vid, "title": info.get("title"), "url": f"https://youtu.be/{vid}",
             "upload_date": info.get("upload_date"), "view_count": info.get("view_count"),
+            "acces": "public" if is_public else "non_public",
             "analysis_source": analysis_source,
             "github_repos": [link["url"] for link in links],
             "topics": score_topics(text),
@@ -528,26 +571,46 @@ def cmd_scrape(args):
         _aggregate_tools(tools_index, vid, videos[-1]["tools"])
         manifest["videos_seen"][vid] = {"channel": slug, "scraped_at": run_ts}
 
+    # Signature de throttle : aucune vidéo publique retenue alors que des vidéos ont été vues,
+    # toutes avec availability indéterminé → YouTube dégrade les métadonnées (souvent : pas de
+    # runtime JS + extractions trop rapprochées). La classification public/non-public n'est alors
+    # pas fiable — on prévient au lieu d'affirmer un faux "tout non-public".
+    throttled = not videos and non_publiques and all(v["availability"] is None for v in non_publiques)
+
     try:
         partial = _score_repos(repo_urls_seen, repos_scored, manifest, projets, args.refresh)
     except RateLimitExhausted as e:
         partial = True
         print(f"⚠️ {e} — résultats partiels sauvegardés, relance `scrape` pour reprendre")
 
-    channel_doc = {"channel": chan_name, "slug": slug, "url": url,
-                   "scraped_at": run_ts, "video_count": len(videos),
-                   "videos": videos}
-    manifest["last_scraped"] = run_ts
-    _write_json_atomic(os.path.join(DATA_DIR, f"{slug}.json"), channel_doc)
-    _write_json_atomic(REPOS_FILE, repos_scored)
-    _write_json_atomic(TOOLS_FILE, tools_index)
-    _write_json_atomic(MANIFEST_FILE, manifest)
+    # Sous throttle, la classification est fausse : on ne clobber pas le channel doc précédent.
+    if not throttled:
+        channel_doc = {"channel": chan_name, "slug": slug, "url": url,
+                       "scraped_at": run_ts, "video_count": len(videos),
+                       "videos": videos}
+        manifest["last_scraped"] = run_ts
+        _write_json_atomic(os.path.join(DATA_DIR, f"{slug}.json"), channel_doc)
+        _write_json_atomic(REPOS_FILE, repos_scored)
+        _write_json_atomic(TOOLS_FILE, tools_index)
+        _write_json_atomic(MANIFEST_FILE, manifest)
 
     top = sorted([r for r in repos_scored.values() if r.get("scores")],
                  key=lambda r: r["scores"]["total_100"], reverse=True)[:5]
+    if throttled:
+        print(json.dumps({
+            "status": "throttle",
+            "chaine": chan_name,
+            "message": "⚠️ YouTube a dégradé les métadonnées (availability indéterminé sur toutes les vidéos) "
+                       "— classification public/non-public non fiable. Réessaie plus tard (espacement plus long), "
+                       "avec un runtime JS (deno) ou des cookies, ou force avec --include-hidden.",
+            "videos_vues_sans_classement": [{"id": v["id"], "title": v["title"], "url": v["url"]}
+                                            for v in non_publiques],
+        }, indent=2, ensure_ascii=False))
+        return
     print(json.dumps({
         "status": "partiel" if partial else "complet",
         "chaine": chan_name, "videos_analysees": len(videos),
+        "videos_non_publiques": non_publiques,
         "repos_trouves": len(repo_urls_seen), "repos_notes": len(repos_scored),
         "top_repos": [{"url": r["url"], "score": r["scores"]["total_100"], "verdict": r["verdict"]}
                       for r in top],
@@ -700,6 +763,8 @@ def main():
     p_scrape.add_argument("channel_url")
     p_scrape.add_argument("--max", type=int, default=20)
     p_scrape.add_argument("--refresh", action="store_true")
+    p_scrape.add_argument("--include-hidden", action="store_true", dest="include_hidden",
+                          help="inclure les vidéos non publiques (membres/non répertoriées)")
 
     sub.add_parser("status")
 
