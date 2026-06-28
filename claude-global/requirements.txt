@@ -1,0 +1,3 @@
+# Dépendances optionnelles du youtube-scraper.
+# Le reste du dépôt fonctionne en stdlib pure ; seul `scrape` requiert yt-dlp.
+yt-dlp>=2024.1.1

@@ -1,0 +1,14 @@
+{
+  "_doc": "Source unique des listes de scoring (AXE 3 thématique + AXE 4 personnel). Édite ce fichier ; scoring-profile.md le référence sans recopier les listes.",
+  "projets_actifs": [
+    {"nom": "WhatsApp→N8N", "keywords": ["whatsapp", "n8n", "automation", "automatisation", "webhook", "workflow"], "poids": "fort"},
+    {"nom": "SC Rénovations", "keywords": ["btp", "devis", "obat", "chantier", "renovation", "rénovation", "batiment"], "poids": "fort"},
+    {"nom": "Coaching sportif / triathlon", "keywords": ["triathlon", "running", "cycling", "intervals", "garmin", "training", "ftp"], "poids": "moyen"}
+  ],
+  "outils_manquants": [
+    {"nom": "Garmin MCP", "keywords": ["garmin", "mcp", "fitness", "wearable", "connect"]},
+    {"nom": "OBAT MCP", "keywords": ["obat", "devis", "facturation", "btp"]},
+    {"nom": "Notion bridge IA", "keywords": ["notion", "bridge", "pont", "connector", "connecteur"]}
+  ],
+  "themes_surveilles": ["ia", "n8n", "automatisation", "btp", "sport"]
+}
