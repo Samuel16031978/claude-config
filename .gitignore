@@ -6,3 +6,7 @@
 claude-global/dist/
 __pycache__/
 *.pyc
+
+# Outputs du youtube-scraper (reconstructibles via scrape) — sauf la config AXE 4
+claude-global/data/youtube-scrapes/*.json
+!claude-global/data/youtube-scrapes/projets-samuel.json
