@@ -643,6 +643,7 @@ def cmd_topics(args):
 
 
 def cmd_insights(args):
+    seen: set[tuple] = set()
     out = []
     for path in _channel_files():
         doc = _read_json(path, {})
@@ -652,6 +653,10 @@ def cmd_insights(args):
                     continue
                 if ins["relevance"] < args.min_score:
                     continue
+                key = (ins["texte"], v.get("id", v["url"]))
+                if key in seen:
+                    continue
+                seen.add(key)
                 out.append({**ins, "video": v["title"], "url": v["url"]})
     out.sort(key=lambda i: i["relevance"], reverse=True)
     print(json.dumps(out, indent=2, ensure_ascii=False))
