@@ -534,6 +534,56 @@ def _flatten_entries(node):
     return out
 
 
+def _shorts_tab_url(url):
+    """Onglet /shorts d'une chaîne (retire un onglet existant avant d'ajouter /shorts)."""
+    base = re.sub(r"/(videos|streams|shorts|featured)/?$", "", url.rstrip("/"))
+    return base + "/shorts"
+
+
+def _extract_channel_entries(yt_dlp, flat_opts, url, per_tab_limit):
+    """Entrées {id, format} fusionnées vidéos + shorts, dédupliquées par id.
+    - vidéo/short unique → 1 entrée
+    - URL d'onglet explicite (/videos ou /shorts) → ce seul onglet
+    - chaîne (handle/root) → tête de l'onglet vidéos + tête de l'onglet shorts.
+    Retourne (entries, chan_meta) — chan_meta sert au nommage (uploader/title)."""
+    if SINGLE_VIDEO_RE.search(url):
+        chan = _extract_channel_listing(yt_dlp, flat_opts, url)
+        fmt = "short" if "/shorts/" in url else "video"
+        return [{"id": e["id"], "format": fmt}
+                for e in _flatten_entries(chan) if e.get("id")], chan
+
+    want_videos = not re.search(r"/shorts/?$", url)
+    want_shorts = not re.search(r"/(videos|streams|featured)/?$", url)
+    merged, seen, chan_meta = [], set(), None
+
+    if want_videos:
+        try:
+            chan_meta = _extract_channel_listing(yt_dlp, flat_opts, url)
+            for e in _flatten_entries(chan_meta)[:per_tab_limit]:
+                if e.get("id") and e["id"] not in seen:
+                    seen.add(e["id"])
+                    merged.append({"id": e["id"], "format": "video"})
+        except SystemExit:
+            if not want_shorts:
+                raise
+    if want_shorts:
+        try:
+            with yt_dlp.YoutubeDL(flat_opts) as ydl:
+                sh = ydl.extract_info(_shorts_tab_url(url), download=False)
+            chan_meta = chan_meta or sh
+            for e in (_flatten_entries(sh) if sh else [])[:per_tab_limit]:
+                if e.get("id") and e["id"] not in seen:
+                    seen.add(e["id"])
+                    merged.append({"id": e["id"], "format": "short"})
+        except yt_dlp.utils.DownloadError:
+            pass
+
+    if not merged:
+        raise SystemExit(f"❌ impossible de lister vidéos/shorts de {url} "
+                         "(chaîne introuvable, supprimée, ou throttle YouTube — réessaie plus tard)")
+    return merged, (chan_meta or {"title": "channel"})
+
+
 def cmd_scrape(args):
     yt_dlp = _check_ytdlp()
     url = args.channel_url
@@ -547,8 +597,9 @@ def cmd_scrape(args):
 
     auth = _yt_auth_opts()
     flat_opts = {"extract_flat": True, "quiet": True, "skip_download": True, **auth}
-    chan = _extract_channel_listing(yt_dlp, flat_opts, url)
-    all_entries = [e for e in _flatten_entries(chan) if e.get("id")]
+    # Tête généreuse par onglet : assez profond pour atteindre `max` publiques en sautant
+    # d'éventuelles non-publiques intercalées, sans scanner toute la chaîne.
+    all_entries, chan = _extract_channel_entries(yt_dlp, flat_opts, url, args.max + MAX_HIDDEN_SCAN)
     chan_name = chan.get("uploader") or re.sub(r"\s*-\s*Videos$", "", chan.get("title") or "channel")
     slug = _slug(chan_name)
 
@@ -558,15 +609,23 @@ def cmd_scrape(args):
     # la résolution de format échoue ("Requested format is not available") alors qu'on ne télécharge rien.
     detail_opts = {"quiet": True, "skip_download": True, "ignoreerrors": True,
                    "ignore_no_formats_error": True, **auth}
-    for i, entry in enumerate(all_entries):
-        # --max compte les vidéos publiques retenues, pas les entrées brutes : une vidéo
-        # membres-only en tête ne doit pas voler un slot ni décaler le classement public.
-        if len(videos) >= args.max or len(non_publiques) >= MAX_HIDDEN_SCAN:
+    kept = {"video": 0, "short": 0}
+    extracted_any = False
+    for entry in all_entries:
+        fmt = entry.get("format", "video")
+        # Arrêt par format : on collecte jusqu'à `max` publiques de chaque type (vidéos ET shorts),
+        # puis on triera/tronquera à `max` toutes catégories confondues.
+        if kept[fmt] >= args.max:
+            continue
+        if kept["video"] >= args.max and kept["short"] >= args.max:
+            break
+        if len(non_publiques) >= MAX_HIDDEN_SCAN:
             break
         if none_streak >= THROTTLE_STREAK or fail_streak >= THROTTLE_STREAK:
             break  # série d'indéterminés (throttle) ou d'échecs (extraction cassée) → on arrête de marteler
-        if i:
+        if extracted_any:
             time.sleep(DETAIL_SLEEP)
+        extracted_any = True
         vid = entry.get("id")
         try:
             with yt_dlp.YoutubeDL(detail_opts) as ydl:
@@ -585,7 +644,7 @@ def cmd_scrape(args):
         if not is_public and not args.include_hidden:
             non_publiques.append({
                 "id": vid, "title": info.get("title"), "url": f"https://youtu.be/{vid}",
-                "upload_date": info.get("upload_date"),
+                "upload_date": info.get("upload_date"), "format": fmt,
                 "availability": info.get("availability"),
                 "note": "🔒 non-publique (membres/non répertoriée) — souvent le contenu le plus pointu. "
                         "Pour l'analyser à fond : ajoute YOUTUBE_COOKIES=cookies.txt dans .env.local "
@@ -598,12 +657,10 @@ def cmd_scrape(args):
         analysis_source = "transcription" if transcript else "description"
         text = transcript or desc
         links = extract_github_links(desc, transcript)
-        for link in links:
-            repo_urls_seen.add(link["url"])
         videos.append({
             "id": vid, "title": info.get("title"), "url": f"https://youtu.be/{vid}",
             "upload_date": info.get("upload_date"), "view_count": info.get("view_count"),
-            "acces": "public" if is_public else "non_public",
+            "format": fmt, "acces": "public" if is_public else "non_public",
             "analysis_source": analysis_source,
             "github_repos": [link["url"] for link in links],
             "topics": score_topics(text),
@@ -611,8 +668,19 @@ def cmd_scrape(args):
             "tools": extract_tools(text, projets.get("themes_surveilles", [])),
             "description_preview": desc[:200],
         })
-        _aggregate_tools(tools_index, vid, videos[-1]["tools"])
-        manifest["videos_seen"][vid] = {"channel": slug, "scraped_at": run_ts}
+        kept[fmt] += 1
+
+    # Tri par date décroissante puis tronquage à --max : les N plus récents toutes catégories
+    # (vidéos + shorts) — l'ordre inter-onglets n'est fiable qu'après extraction détaillée.
+    videos.sort(key=lambda v: v.get("upload_date") or "0", reverse=True)
+    videos = videos[: args.max]
+
+    # Agrégation seulement pour les vidéos retenues (sinon les tronquées pollueraient outils/repos).
+    for v in videos:
+        for repo_url in v["github_repos"]:
+            repo_urls_seen.add(repo_url)
+        _aggregate_tools(tools_index, v["id"], v["tools"])
+        manifest["videos_seen"][v["id"]] = {"channel": slug, "scraped_at": run_ts}
 
     # Signature de throttle : aucune vidéo publique retenue alors que des vidéos ont été vues,
     # toutes avec availability indéterminé → YouTube dégrade les métadonnées (souvent : pas de
@@ -626,11 +694,13 @@ def cmd_scrape(args):
         partial = True
         print(f"⚠️ {e} — résultats partiels sauvegardés, relance `scrape` pour reprendre")
 
+    n_videos = sum(1 for v in videos if v.get("format") != "short")
+    n_shorts = sum(1 for v in videos if v.get("format") == "short")
     # Sous throttle, la classification est fausse : on ne clobber pas le channel doc précédent.
     if not throttled:
         channel_doc = {"channel": chan_name, "slug": slug, "url": url,
-                       "scraped_at": run_ts, "video_count": len(videos),
-                       "videos": videos}
+                       "scraped_at": run_ts, "video_count": n_videos, "short_count": n_shorts,
+                       "videos": videos, "non_publiques": non_publiques}
         manifest["last_scraped"] = run_ts
         _write_json_atomic(os.path.join(DATA_DIR, f"{slug}.json"), channel_doc)
         _write_json_atomic(REPOS_FILE, repos_scored)
@@ -653,10 +723,12 @@ def cmd_scrape(args):
     print(json.dumps({
         "status": "partiel" if partial else "complet",
         "chaine": chan_name, "videos_analysees": len(videos),
+        "dont_videos": n_videos, "dont_shorts": n_shorts,
         "videos_non_publiques": non_publiques,
         "repos_trouves": len(repo_urls_seen), "repos_notes": len(repos_scored),
         "top_repos": [{"url": r["url"], "score": r["scores"]["total_100"], "verdict": r["verdict"]}
                       for r in top],
+        "astuce": "→ `report " + slug + "` pour générer la fiche de veille",
     }, indent=2, ensure_ascii=False))
 
 
@@ -797,6 +869,154 @@ def _channel_files():
             ("repos-scored.json", "tools-seen.json", "projets-samuel.json")]
 
 
+# ── Rapport / fiche de veille ────────────────────────────────────────────────────
+
+def _fmt_date(yyyymmdd):
+    if not yyyymmdd or len(yyyymmdd) != 8:
+        return yyyymmdd or "?"
+    return f"{yyyymmdd[6:8]}/{yyyymmdd[4:6]}/{yyyymmdd[0:4]}"
+
+
+def _build_report(slug, doc, repos_scored, tools_seen):
+    videos = doc.get("videos", [])
+    vid_ids = {v["id"] for v in videos}
+
+    # Repos cités dans la chaîne, joints aux scores (un repo cité mais non noté reste listé).
+    repo_urls = []
+    for v in videos:
+        for u in v.get("github_repos", []):
+            if u not in repo_urls:
+                repo_urls.append(u)
+    repos = []
+    for u in repo_urls:
+        r = repos_scored.get(u)
+        found_in = [v["title"] for v in videos if u in v.get("github_repos", [])]
+        if r and r.get("scores"):
+            s = r["scores"]
+            repos.append({
+                "url": u, "score": s["total_100"], "verdict": r["verdict"],
+                "axes": f'{s["axe1_contenu_claude"]}/{s["axe2_qualite"]}/'
+                        f'{s["axe3_thematique"]}/{s["axe4_personnel"]}',
+                "flags": r.get("flags", []), "found_in": found_in,
+            })
+        else:
+            repos.append({"url": u, "score": None, "verdict": "— non noté",
+                          "axes": "—", "flags": [], "found_in": found_in})
+    repos.sort(key=lambda x: x["score"] if x["score"] is not None else -1, reverse=True)
+
+    theme_sum = {}
+    for v in videos:
+        for t, sc in (v.get("topics") or {}).items():
+            theme_sum[t] = theme_sum.get(t, 0) + sc
+    themes = [t for t in sorted(theme_sum, key=theme_sum.get, reverse=True) if theme_sum[t] >= 5]
+
+    outils = [{"nom": k, "relevance": m["relevance_cumulee"], "mentions": m["mentions_total"]}
+              for k, m in tools_seen.items() if set(m.get("videos", [])) & vid_ids]
+    outils.sort(key=lambda x: x["relevance"], reverse=True)
+
+    seen, insights = set(), []
+    for v in videos:
+        for it in v.get("insights", []):
+            key = (it["texte"], v["id"])
+            if key in seen:
+                continue
+            seen.add(key)
+            insights.append({**it, "video": v["title"]})
+    insights.sort(key=lambda x: x["relevance"], reverse=True)
+
+    dates = sorted(v.get("upload_date") for v in videos if v.get("upload_date"))
+    periode = f"{_fmt_date(dates[-1])} → {_fmt_date(dates[0])}" if dates else "?"
+    top = repos[0] if repos and repos[0]["score"] is not None else None
+
+    return {
+        "chaine": doc.get("channel"), "url": doc.get("url"), "slug": slug,
+        "date_scan": (doc.get("scraped_at") or "")[:10], "periode": periode,
+        "nb_videos": doc.get("video_count", 0), "nb_shorts": doc.get("short_count", 0),
+        "repos_trouves": len(repos),
+        "top_repo": top["url"] if top else None,
+        "top_score": top["score"] if top else None,
+        "verdict_top": top["verdict"].split()[0] if top else None,
+        "themes": themes, "top_outils": [o["nom"] for o in outils[:8]],
+        "nb_insights": len(insights),
+        "repos": repos, "insights": insights[:10], "outils": outils[:12],
+        "non_publiques": doc.get("non_publiques", []),
+    }
+
+
+def _fiche_markdown(rep):
+    L = [f"**{rep['chaine']}** · {rep['periode']} · {rep['nb_videos']} vidéos / "
+         f"{rep['nb_shorts']} shorts · scan {rep['date_scan']}", ""]
+
+    L.append("## 🏆 Repos GitHub notés /100")
+    if rep["repos"]:
+        L += ["| Repo | Score | Verdict | Axes C/Q/T/P | Cité dans |",
+              "|---|---|---|---|---|"]
+        for r in rep["repos"]:
+            score = f"{r['score']}/100" if r["score"] is not None else "—"
+            axes = r["axes"] + (" ⚠️" if r.get("flags") else "")
+            cite = "; ".join(r["found_in"][:2])
+            L.append(f"| {r['url']} | {score} | {r['verdict']} | {axes} | {cite} |")
+    else:
+        L.append("_Aucun repo GitHub cité dans les vidéos analysées._")
+    L.append("")
+
+    L.append("## 💡 Insights clés")
+    if rep["insights"]:
+        for it in rep["insights"]:
+            L.append(f"- **[{it['topic']} {it['relevance']}]** {it['texte']} — _{it['video']}_")
+    else:
+        L.append("_Aucun insight au-dessus du seuil._")
+    L.append("")
+
+    L.append("## 🛠️ Stack & outils cités")
+    if rep["outils"]:
+        L.append(" · ".join(f"{o['nom']} (×{o['mentions']})" for o in rep["outils"]))
+    else:
+        L.append("_Aucun outil détecté._")
+    L.append("")
+
+    L.append("## 🔒 Vidéos non-publiques à creuser")
+    if rep["non_publiques"]:
+        for v in rep["non_publiques"]:
+            L.append(f"- {v['title']} ({_fmt_date(v.get('upload_date'))}) — {v['url']}")
+    else:
+        L.append("_Aucune._")
+    L.append("")
+
+    L.append("## 📋 Annexe — par vidéo")
+    return "\n".join(L)
+
+
+def _annex_lines(doc):
+    out = []
+    for v in sorted(doc.get("videos", []), key=lambda v: v.get("upload_date") or "0", reverse=True):
+        repos = ", ".join(v.get("github_repos", [])) or "—"
+        outils = ", ".join(t["nom"] for t in v.get("tools", [])) or "—"
+        top_ins = max(v.get("insights", []), key=lambda i: i["relevance"], default=None)
+        ins = f" · 💡 {top_ins['texte'][:80]}" if top_ins else ""
+        out.append(f"- `[{_fmt_date(v.get('upload_date'))}]` `{v.get('format','video')}` "
+                   f"**{v['title']}** · {v.get('analysis_source')} · repos: {repos} · "
+                   f"outils: {outils}{ins}")
+    return "\n".join(out)
+
+
+def cmd_report(args):
+    slug = args.channel if os.path.isfile(os.path.join(DATA_DIR, f"{args.channel}.json")) \
+        else _slug(args.channel)
+    path = os.path.join(DATA_DIR, f"{slug}.json")
+    doc = _read_json(path, None)
+    if doc is None:
+        raise SystemExit(f"❌ aucun scan pour '{args.channel}' ({path} introuvable) — lance `scrape` d'abord")
+    rep = _build_report(slug, doc, _read_json(REPOS_FILE, {}), _read_json(TOOLS_FILE, {}))
+    markdown = _fiche_markdown(rep) + "\n" + _annex_lines(doc)
+    if args.format == "md":
+        print(markdown)
+    elif args.format == "json":
+        print(json.dumps({k: v for k, v in rep.items()}, indent=2, ensure_ascii=False))
+    else:  # both
+        print(json.dumps({**rep, "markdown": markdown}, indent=2, ensure_ascii=False))
+
+
 def main():
     _load_env()
     parser = argparse.ArgumentParser()
@@ -831,10 +1051,14 @@ def main():
     p_score.add_argument("github_url")
     p_score.add_argument("--refresh", action="store_true")
 
+    p_report = sub.add_parser("report")
+    p_report.add_argument("channel", help="slug ou nom de chaîne déjà scannée")
+    p_report.add_argument("--format", choices=["md", "json", "both"], default="both")
+
     args = parser.parse_args()
     cmds = {"scrape": cmd_scrape, "status": cmd_status, "repos": cmd_repos,
             "topics": cmd_topics, "insights": cmd_insights, "tools": cmd_tools,
-            "new": cmd_new, "score": cmd_score}
+            "new": cmd_new, "score": cmd_score, "report": cmd_report}
     if args.cmd not in cmds:
         parser.print_help()
         sys.exit(1)
