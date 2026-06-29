@@ -1,344 +1,102 @@
-# Plan — YouTube → GitHub Repo Scraper & Scorer (Skill)
+# Plan — Livrable « Fiche de veille chaîne » → Notion
 
 ## Context
 
-Samuel veut un outil qui **explore les chaînes YouTube** de youtubeurs influents (IA, automatisation, entrepreneuriat, mindset) pour en **extraire les repos GitHub** mentionnés (teams, projets, vidéos), puis **noter chaque repo sur 100 points** selon une grille personnelle déjà établie dans sa routine.
+Le scraper `youtube_scraper.py` est **déjà construit et validé** (extraction repos GitHub oral+écrit, notation /100 sur 4 axes, insights, outils, support vidéos **et** shorts, cookies auth, anti-throttle/anti-runaway — branche `claude/youtube-scraper-github-26iaoq`, PR #6). Ce qui manque : **définir ce que Samuel reçoit** quand il donne une chaîne. Aujourd'hui `scrape` ne renvoie qu'un statut technique brut ; la richesse dort dans les JSON.
 
-Inversion clé de logique : **la vidéo est un canal de découverte ; le repo GitHub est l'objet noté.** Le livrable principal = une liste de repos GitHub classés par score /100, prêts à explorer/installer.
+**Décisions Samuel (ce tour) :**
+- **Livrable = Notion** : une **base de données récap « Chaînes scannées »** (1 ligne = 1 chaîne), chaque ligne portant un résumé (score top, nb repos…) et **son contenu de page = la fiche complète**. En Notion, *une ligne de base EST une page* → le « lien vers une sous-page par chaîne » est natif (la ligne ouvre la fiche).
+- **Emplacement** : une **nouvelle page racine dédiée** `📺 Veille YouTube (Scraper)` contenant la base + un mode d'emploi.
+- **Périmètre** : **vidéos + shorts fusionnés** (triés par date, dédupliqués).
+- **Profondeur** : **synthèse + annexe par vidéo**.
 
-**La veille ne se limite pas à GitHub.** L'outil extrait aussi des transcriptions, et **note par pertinence (0-10)** : (a) les **phrases-clés/insights** sur IA, entrepreneuriat et mindset ; (b) les **outils & technos cités** (n8n, Claude, Cursor…) pour repérer les stacks tendance.
+**Résultat visé** : Samuel donne une URL de chaîne → une fiche structurée apparaît dans Notion (et un récap en chat), réutilisable et archivée, sans friction.
 
-L'outil sera un **skill Claude Code** (SKILL.md) + un **script CLI Python** suivant le pattern `intervals_icu.py`. Pas d'app web — pas de clés exposées.
+## Répartition des responsabilités (clé)
 
----
+- **Python (`youtube_scraper.py`)** = données + scoring + **génération de la fiche** (Markdown) et d'un **payload JSON** de propriétés. Aucune clé externe, stdlib only (cohérent avec `intervals_icu.py`).
+- **Agent (skill) via Notion MCP** = **livraison Notion** (créer la page racine + la base une fois, puis upsert d'une ligne + contenu par scan). Pas de clé Notion dans le code. Respecte la règle sécurité et la leçon CLAUDE.md sur les connecteurs.
 
-## Architecture
+## Changements de code
 
-### Fichiers à créer
+### 1. Fusion vidéos + shorts — `youtube_scraper.py`
+- Nouveau helper `_extract_channel_entries(yt_dlp, flat_opts, url)` qui réutilise `_extract_channel_listing` (déjà robuste : `/videos` → fallback URL brute) **et** liste aussi l'onglet `…/shorts`, fusionne via `_flatten_entries`, **déduplique par id** (certaines chaînes ex. @ia_irl recouvrent les deux onglets).
+- Marquer la provenance : `format = "short"` si l'entrée vient de `/shorts` (ou durée ≤ 180s), sinon `"video"`.
+- Dans `cmd_scrape` : remplacer l'appel unique par ce helper ; conserver la sélection « N plus récents » en **triant les vidéos analysées par `upload_date` décroissant** avant de couper à `--max` (l'ordre inter-onglets n'est fiable qu'après extraction détaillée). Garder le garde-fou `fail_streak`/`none_streak`.
+- Stocker `format` dans chaque enregistrement vidéo du channel JSON ; exposer `video_count`/`short_count`.
 
-| Fichier | Rôle |
+### 2. Nouvelle commande `report <channel|slug>` — `youtube_scraper.py`
+- `cmd_report(args)` lit le channel JSON + `repos-scored.json` + `tools-seen.json` et produit, selon `--format md|json|both` (défaut `both`) :
+  - **JSON de propriétés** (pour mapper aux colonnes Notion) : `chaine, url, date_scan, periode (max→min upload_date), nb_videos, nb_shorts, repos[{url,score,verdict,axes,found_in}], top_repo, top_score, verdict_top, themes_dominants[], top_outils[], nb_insights`.
+  - **Fiche Markdown** (sections, dans l'ordre des priorités d'origine) :
+    1. En-tête (chaîne · période · N vidéos / M shorts)
+    2. `🏆 Repos GitHub notés /100` — table triée (repo · score · verdict · axes C/Q/T/P · vidéo source). Repos = union des `github_repos` des vidéos de la chaîne, jointe à `repos-scored.json`.
+    3. `💡 Insights clés` — top par `relevance`, groupés par thème (ia/entrepreneuriat/mindset).
+    4. `🛠️ Stack & outils cités` — agrégé (depuis `tools-seen.json`, filtré sur les vidéos de la chaîne).
+    5. `🔒 Vidéos non-publiques à creuser` — depuis le bucket `videos_non_publiques`.
+    6. `📋 Annexe — par vidéo` — ligne compacte : `[date] [format] Titre · source · repos · outils · top insight`.
+- Ajouter le sous-parseur `report` (arg positionnel chaîne/slug + `--format`). Réutilise `_slug`, `_read_json`, `_verdict`.
+
+### 3. Doc — `skills/samuel/youtube-scraper/SKILL.md`
+- Nouvelle section **« Livrable : fiche de veille → Notion »** décrivant le flux que l'agent exécute :
+  1. **Bootstrap (1×)** : créer la page racine `📺 Veille YouTube (Scraper)` puis la base récap (schéma ci-dessous) ; mémoriser les ids dans `data/youtube-scrapes/.notion.json` (gitignoré).
+  2. **Par scan** : `scrape <url>` (vidéos+shorts) → `report --format both` → **upsert** d'une ligne (rechercher la chaîne par titre ; créer sinon mettre à jour) avec les propriétés, puis **contenu de la page = la fiche Markdown** (`notion-update-page replace_content`). Idempotent : re-scan = mise à jour, pas de doublon.
+  3. Rendre l'URL de la page Notion à Samuel + un récap en chat.
+
+### 4. Persistance ids Notion — `data/youtube-scrapes/.notion.json` (gitignoré)
+- `{root_page_id, database_id, data_source_id}` pour réutiliser la même base d'un scan à l'autre. Couvert par la règle gitignore existante `data/youtube-scrapes/*.json` (exception seulement pour `projets-samuel.json`).
+
+## Schéma de la base récap (Notion, via `notion-create-database`)
+
+```sql
+CREATE TABLE (
+  "Chaîne" TITLE,
+  "URL chaîne" URL,
+  "Date scan" DATE,
+  "Période" RICH_TEXT,
+  "Vidéos" NUMBER,
+  "Shorts" NUMBER,
+  "Repos trouvés" NUMBER,
+  "Top repo" URL,
+  "Top score" NUMBER,
+  "Verdict top" SELECT('🔥':red,'✅':green,'🟡':yellow,'⚪':gray),
+  "Thèmes" MULTI_SELECT('ia':blue,'entrepreneuriat':orange,'mindset':purple,'dev':gray),
+  "Top outils" RICH_TEXT
+)
+```
+Le **contenu** de chaque ligne-page = la fiche Markdown (synthèse + annexe). Vue par défaut triée par `Date scan` desc ; vue secondaire triée par `Top score` desc.
+
+## Fichiers touchés
+
+| Fichier | Action |
 |---|---|
-| `claude-global/youtube_scraper.py` | Script CLI principal (pattern intervals_icu.py) |
-| `claude-global/skills/samuel/youtube-scraper/SKILL.md` | Skill Claude Code |
-| `claude-global/.claude/memory/scoring-profile.md` | **Profil de scoring** (grille /100 + projets/thèmes) lu par l'agent avant d'évaluer |
-| `claude-global/data/youtube-scrapes/projets-samuel.json` | Config machine AXE 4 (projets actifs + outils manquants + thèmes) |
-| `claude-global/data/youtube-scrapes/` | Répertoire de données (outputs gitignored) |
-| `claude-global/requirements.txt` | Dépendance `yt-dlp` |
-
-### Profil de scoring — `.claude/memory/scoring-profile.md` (anti-drift, architecte round 3)
-Décision Samuel : externaliser le profil dans `.claude/memory/scoring-profile.md`, lu par l'agent avant d'évaluer. **Le SKILL.md instruit l'agent : « Lis `.claude/memory/scoring-profile.md` avant d'évaluer la pertinence. »**
-
-**Source unique des listes** (évite la désynchro `.md`/`.json`) : `projets-samuel.json` est l'**unique source** des projets actifs / outils manquants / thèmes surveillés. Le `.md` porte la **méthodologie** (grille des 4 axes, tables de points, ancres de verdict, plafond 65) et **référence** le JSON pour les listes vivantes — il ne les recopie pas. Ligne type dans le `.md` : *« Projets actifs et thèmes surveillés : voir `data/youtube-scrapes/projets-samuel.json` (source machine). »* Le script et l'agent lisent donc les mêmes listes depuis une seule source.
-
-### Données persistées
-- `data/youtube-scrapes/repos-scored.json` — **source de vérité unique** des repos notés (dédup par URL canonique, écriture atomique)
-- `data/youtube-scrapes/<channel_slug>.json` — par scrape : vidéos + **références** vers URLs repos (pas de copie des scores) + topics + insights + tools
-- `data/youtube-scrapes/tools-seen.json` — outils/technos agrégés par chaîne (stacks tendance)
-- `data/youtube-scrapes/.manifest.json` — manifest dict (video IDs + repo URLs déjà vus, + ETag par repo)
-- `data/youtube-scrapes/projets-samuel.json` — **commité** (repo privé, décision Samuel)
-
----
-
-## Subcommandes CLI
-
-```bash
-python3 youtube_scraper.py scrape <channel_url> [--max N]
-# Scrape la chaîne → extrait repos GitHub → score chaque repo /100 → maj manifest
-
-python3 youtube_scraper.py status
-# Résumé du dernier scrape (nb vidéos, nb repos trouvés, top repos par score)
-
-python3 youtube_scraper.py repos [--min-score 60] [--axe claude|qualite|theme|perso]
-# Liste les repos GitHub notés, triés par score /100, filtrables
-
-python3 youtube_scraper.py topics [--topic ia|entrepreneuriat|mindset|dev]
-# Score par topic de chaque vidéo
-
-python3 youtube_scraper.py insights [--topic ia|entrepreneuriat|mindset] [--min-score 6]
-# Phrases-clés/insights extraits des transcriptions, notés par pertinence
-
-python3 youtube_scraper.py tools [--min-score 5]
-# Outils & technos cités, classés par pertinence cumulée (stacks tendance)
-
-python3 youtube_scraper.py new
-# Vidéos ET repos ajoutés depuis le dernier scrape (comparaison manifest)
-
-python3 youtube_scraper.py score <github_url>
-# Note un repo GitHub isolé /100 (utile hors YouTube)
-```
-
----
-
-## Accès aux données (fallback)
-
-1. **yt-dlp** (default, aucune clé) — extrait vidéos + transcriptions
-2. **YouTube Data API v3** (fallback si `YOUTUBE_API_KEY` dans `.env.local`) — via `urllib` stdlib
-3. **GitHub REST API** (via `urllib` stdlib, comme intervals_icu.py — pas de SDK) pour scorer les repos :
-   - Non authentifié : 60 req/h ; authentifié si `GITHUB_TOKEN` dans `.env.local` : 5000 req/h (recommandé)
-   - **`User-Agent` header obligatoire** (sinon 403 même avec token) — `urllib` ne le met pas par défaut
-   - 2 appels/repo : `/repos/{owner}/{repo}` (stars, `pushed_at`, `default_branch`, description) **puis** `/git/trees/{default_branch}?recursive=1` (détection `.claude/`, `skills/`, `agents/`, `hooks/` + taille blob README)
-   - Ordre imposé : repos → tree (le tree a besoin de `default_branch` du 1er appel) — **blocker B2**
-
-### Caching (obligatoire, pas optionnel — architecte round 2)
-- **ETag / `If-None-Match`** : stocker l'ETag par repo dans le manifest ; un `304` ne consomme pas le quota
-- **TTL 14 jours** (décision Samuel) : repo vu il y a <14j → réutiliser le score caché ; `--refresh` force le re-score
-- **Backoff** : lire `Retry-After` / `X-RateLimit-Reset`, jamais de boucle dure
-- **Quota épuisé → persist-partial reprenable** (décision Samuel) : écrire les repos déjà notés, un `scrape` ultérieur reprend les manquants via le cache
-- **URL canonique** (clé de dédup/cache) : `github.com/{owner}/{repo}` en minuscules, strip `.git`, strip chemins profonds/`/tree/...`
-
----
-
-## Pipeline de scrape
-
-```
-1. yt-dlp extraction plate de la chaîne (IDs + titres)
-2. Pour chaque vidéo (jusqu'à --max) :
-   a. Récupérer description + transcription (auto-subs fr,en)
-   b. Extraire repos GitHub (3 passes — voir ci-dessous)
-   c. Tagger topics depuis transcription (insights IA/entrep/mindset/dev)
-3. Dédupliquer les repos GitHub trouvés (par URL canonique)
-4. Pour chaque repo unique : appeler GitHub API → scorer /100 (4 axes)
-5. Écrire <channel_slug>.json + maj repos-scored.json + manifest
-```
-
-### Source d'analyse des insights : la transcription (pas le titre)
-
-Les insights topic viennent de la **transcription** (auto-subs yt-dlp) — pas du titre clickbait.
-`yt-dlp --write-auto-subs --sub-langs fr,en --skip-download <url>`. Fallback description.
-
-### Extraction GitHub (orale → URL reconstruite) — 3 passes
-
-```
-Passe 1 — regex directe (description ou transcription)
-  r'https?://github\.com/[\w\-\.]+/[\w\-\.]+'
-
-Passe 2 — normalisation orale (transcription)
-  "github dot com slash user slash repo" → github.com/user/repo
-  "dot"→".", "slash"→"/", "tiret"/"dash"→"-", "underscore"→"_"
-  puis regex sur le texte normalisé
-
-Passe 3 — contexte de proximité
-  "le repo / dépôt / code sur github" + séquence alphanumérique dans 30 mots
-  → reconstruction tentative user/repo (confiance moyenne)
-```
-
-Chaque repo : `{"url": "...", "source": "oral|description", "confiance": "haute|moyenne", "found_in_video": "<id>"}`
-Validation : l'API GitHub confirme l'existence (404 → confiance "non vérifiée", exclu du scoring).
-
----
-
-## ⭐ Système de scoring GitHub /100 (cœur — grille de Samuel)
-
-Chaque repo GitHub extrait est noté sur **100 points** répartis sur **4 axes** :
-
-### AXE 1 — Contenu Claude (35 pts)
-Détecté via l'arbre du repo (`git/trees/{default_branch}?recursive=1`). Match par **suffixe de chemin n'importe où** (pas seulement racine) → monorepos non sous-notés.
-| Critère | Points | Règle automatisable |
-|---|---|---|
-| Présence dossier `.claude/` | 0–10 | présent=10, sinon 0 |
-| Skills installables | 0–10 | nb fichiers `SKILL.md` : 1=4, 2-3=7, 4+=10 |
-| Agents définis | 0–8 | `agents/` ou `*.agent.md` : présent=8, partiel=4 |
-| Commands / hooks | 0–7 | `commands/` + `hooks/` : les deux=7, un seul=4 |
-
-**Arbre tronqué** (`truncated: true` sur gros monorepo) : fallback `/contents/` sur les chemins AXE-1 ciblés uniquement. Si toujours indéterminable → marquer AXE 1 `unknown` (pas `0` — évite un faux négatif). 
-**Plafond 65** documenté : un excellent repo non-Claude plafonne ~65 ("garder en veille") — comportement voulu pour une grille orientée contenu Claude.
-
-### AXE 2 — Qualité (25 pts)
-Détecté via `/repos/{owner}/{repo}`.
-| Critère | Points | Règle |
-|---|---|---|
-| Stars GitHub | 0–10 | `>1000`=10, 500-1000=8, 100-500=6, 20-100=4, <20=2 |
-| Activité récente (`pushed_at`) | 0–8 | <1 mois=8, <3 mois=6, <6 mois=4, <1 an=2, sinon 0 |
-| Documentation / README | 0–7 | taille README via **blob du tree** (pas d'appel `/readme` séparé → reste à 2 appels/repo) : >5ko=7, >1ko=5, présent=3, absent=0 |
-
-### AXE 3 — Thématique (20 pts)
-Match des thèmes surveillés dans description/topics/README.
-| Critère | Points | Règle |
-|---|---|---|
-| Correspond aux thèmes surveillés | 0–20 | IA, N8N, automatisation, BTP, sport — 4 pts par thème matché (max 20) |
-
-### AXE 4 — Personnel Samuel (20 pts) — **confiance attachée (blocker B1)**
-Match contre `projets-samuel.json`. **Le matching mots-clés sur/sous-déclenche** ("n8n" partout, "obat" jamais) → on attache une confiance et on **exclut les scores basse confiance du verdict** (ils sont affichés mais marqués "à valider").
-| Critère | Points | Règle |
-|---|---|---|
-| Répond à un projet actif | 0–12 | match mot-clé projet : fort (≥2 kw)=12, partiel (1 kw)=6 |
-| Comble un outil manquant | 0–8 | match liste outils manquants : oui=8, proche=4 |
-
-Chaque repo expose `axe4_confidence: "haute|basse"` + `matched_keywords: [...]` dans `details`. Si confiance basse → AXE 4 sorti du `total_100` du verdict, signalé `⚠️ AXE4 à valider`.
-
-### Score final
-```python
-score_100 = axe1 + axe2 + axe3 + axe4   # 0-100
-# Verdict (ancres) :
-#  85-100 → 🔥 Pépite — explorer en priorité
-#  70-84  → ✅ Solide — vaut le détour
-#  50-69  → 🟡 Intéressant — à garder en veille
-#  <50    → ⚪ Marginal — ignorer sauf besoin précis
-```
-
-`projets-samuel.json` (config AXE 4, commité car non sensible) :
-```json
-{
-  "projets_actifs": [
-    {"nom": "WhatsApp→N8N", "keywords": ["whatsapp", "n8n", "automation", "webhook"], "poids": "fort"},
-    {"nom": "SC Rénovations", "keywords": ["btp", "devis", "obat", "chantier", "renovation"], "poids": "fort"}
-  ],
-  "outils_manquants": [
-    {"nom": "Garmin MCP", "keywords": ["garmin", "mcp", "fitness", "wearable"]},
-    {"nom": "OBAT MCP", "keywords": ["obat", "devis", "facturation"]}
-  ],
-  "themes_surveilles": ["ia", "n8n", "automatisation", "btp", "sport"]
-}
-```
-
----
-
-## Veille de contenu (au-delà de GitHub — décision Samuel)
-
-En plus du scoring repo, l'outil extrait et **note par pertinence (0-10)** deux types de contenu depuis la transcription :
-
-### A. Phrases-clés / insights (IA, entrepreneuriat, mindset)
-Les transcriptions auto-générées n'ont pas de ponctuation fiable → découpage par **fenêtres glissantes** (~25-40 mots, chevauchement 50%). Chaque fenêtre reçoit :
-```python
-# densité thématique de la fenêtre
-theme_hits = nb keywords thématiques dans la fenêtre
-relevance = round(min(10, theme_hits * 2.5 + signal_bonus), 1)
-# signal_bonus : +2 si tournure à valeur ("la clé c'est", "le secret", "il faut", "j'ai appris", "framework", "stratégie")
-```
-On garde les fenêtres `relevance ≥ 6`, dédupliquées, taguées par topic dominant. Stockées dans `insights` (top N par vidéo).
-
-### B. Outils & technos cités
-Dictionnaire nommé (extensible) : `n8n, make, zapier, claude, chatgpt, gpt, cursor, supabase, vercel, langchain, ollama, notion, airtable, python, react, docker…`
-```python
-# score outil = fréquence de mention × match thèmes/projets surveillés
-freq = nb mentions dans la transcription
-theme_match = 1 si l'outil ∈ thèmes surveillés (projets-samuel.json)
-tool_relevance = round(min(10, freq * 2 + theme_match * 4), 1)
-```
-Agrégé au niveau chaîne dans `tools-seen.json` (quel outil revient le plus, classé par pertinence cumulée) → repère les stacks tendance.
-
-### C. Score par topic (conservé)
-```python
-unique_kw = len(set(keywords_topic) & set(words_transcription))
-topic_score = round(min(10, (unique_kw / len(keywords_topic)) * 25), 1)  # ~40% couverture = 10
-```
-Topics (FR/EN) : `ia`, `entrepreneuriat`, `mindset`, `dev` (dictionnaires bilingues).
-
-> Tous ces scores réutilisent les listes de `projets-samuel.json` (source unique) — pas de drift.
-
----
-
-## Structure JSON de sortie
-
-### Repo noté (repos-scored.json)
-```json
-{
-  "url": "https://github.com/user/claude-agents",
-  "owner": "user", "repo": "claude-agents",
-  "found_in": ["videoId1", "videoId2"],
-  "source": "description", "confiance": "haute",
-  "stars": 1240, "pushed_at": "2026-05-01",
-  "scores": {
-    "axe1_contenu_claude": 28,
-    "axe2_qualite": 22,
-    "axe3_thematique": 16,
-    "axe4_personnel": 12,
-    "total_100": 78
-  },
-  "verdict": "✅ Solide — vaut le détour",
-  "details": {"a_dossier_claude": true, "nb_skills": 6, "themes": ["ia", "automatisation"]}
-}
-```
-
-### Vidéo (channel JSON)
-```json
-{
-  "id": "abc123", "title": "...", "url": "https://youtu.be/abc123",
-  "upload_date": "20240315", "view_count": 45200,
-  "analysis_source": "transcription",
-  "github_repos": ["https://github.com/user/claude-agents"],
-  "topics": {"ia": 8.5, "entrepreneuriat": 6.0, "mindset": 0.0, "dev": 2.5},
-  "insights": [
-    {"texte": "la clé en IA c'est d'automatiser le boring avant le créatif", "topic": "ia", "relevance": 8.5},
-    {"texte": "un solopreneur doit valider avant de coder", "topic": "entrepreneuriat", "relevance": 7.0}
-  ],
-  "tools": [{"nom": "n8n", "freq": 4, "relevance": 9.0}, {"nom": "claude", "freq": 3, "relevance": 8.0}],
-  "description_preview": "..."
-}
-```
-
-### Outils agrégés (tools-seen.json — niveau chaîne)
-```json
-{
-  "n8n": {"mentions_total": 12, "videos": ["abc123", "def456"], "relevance_cumulee": 9.5, "theme_surveille": true},
-  "cursor": {"mentions_total": 3, "videos": ["abc123"], "relevance_cumulee": 6.0, "theme_surveille": false}
-}
-```
-
----
-
-## SKILL.md — déclencheurs
-
-- URL YouTube, "scrape", "chaîne youtube", "repos github d'un youtubeur"
-- nom de youtubeur + IA / automatisation / mindset
-- "note ce repo", "scoring github", "pépites github", "nouvelles vidéos"
-- "quels repos valent le coup", "100 points"
-- "insights", "phrases-clés", "quels outils il utilise", "stack", "technos citées"
-
----
-
-## Manifest (dict — O(1), correction architecte)
-
-`data/youtube-scrapes/.manifest.json` :
-```json
-{
-  "last_scraped": "2026-06-28T10:00:00",
-  "videos_seen": {"abc123": {"channel": "slug", "scraped_at": "..."}},
-  "repos_seen": {"github.com/user/repo": {"score": 78, "scraped_at": "..."}}
-}
-```
-`new` compare les clés du scrape courant aux clés du manifest.
-
----
-
-## Corrections architecte (round 1 + 2, toutes intégrées)
-
-| Problème | Sévérité | Correction |
-|---|---|---|
-| Gitignore manquant | Bloquant | `data/youtube-scrapes/*.json` ignoré SAUF `projets-samuel.json` (repo privé) |
-| yt-dlp non documentée | Important | `requirements.txt` + guard `_check_ytdlp()` message clair |
-| Manifest array | Important | dict keyed by id/url → O(1) |
-| Injection URL subprocess | Mineur | regex whitelist + subprocess list-form uniquement |
-| **B1** AXE 4 non validé gonfle le verdict | **Bloquant** | confiance + `matched_keywords` ; basse confiance exclue du verdict |
-| **B2** branche tree hardcodée (`main`) | **Bloquant** | utiliser `default_branch` ; ordre repos→tree |
-| **B3** dual-write incohérent | **Bloquant** | `repos-scored.json` source unique ; écriture atomique (temp + `os.replace`) ; channel = références seules |
-| Rate-limit GitHub | Important | ETag/304 + TTL 14j + backoff `Retry-After` ; persist-partial reprenable |
-| `User-Agent` manquant | Important | header obligatoire sur tous les appels GitHub |
-| URL non canonique | Important | normalisation (host+owner+repo minuscule, strip `.git`/chemins) |
-| README = appel séparé | Mineur | taille lue depuis le blob du tree (reste 2 appels/repo) |
-| Recency non déterministe | Mineur | figer "now" par run (buckets AXE 2 stables) |
-| Drift profil `.md`/`.json` | Concern | `.json` = source unique des listes ; le `.md` les référence (méthodo seule) |
-
----
-
-## Ordre d'implémentation
-
-1. **Commit 1** — `.gitignore` : `claude-global/data/youtube-scrapes/*.json` + exception `!projets-samuel.json`
-2. **Commit 2** — `requirements.txt` (`yt-dlp>=2024.1.1`) + `projets-samuel.json` + `.claude/memory/scoring-profile.md`
-3. **Commit 3** — `youtube_scraper.py` complet (avec contrat d'écriture atomique B3)
-4. **Commit 4** — `SKILL.md` (avec instruction « Lis `.claude/memory/scoring-profile.md` avant d'évaluer »)
-
----
-
-## Vérification
-
-1. `pip install yt-dlp`
-2. `python3 youtube_scraper.py scrape https://www.youtube.com/@<chaine-ia> --max 5`
-3. Vérifier extraction repos GitHub + scoring /100 dans `repos-scored.json`
-4. `python3 youtube_scraper.py score https://github.com/anthropics/claude-code` → score /100 cohérent
-5. `repos --min-score 70` → seulement les repos solides
-6. `topics --topic ia` → score topic par vidéo
-7. `insights --topic entrepreneuriat --min-score 6` → phrases-clés pertinentes
-8. `tools --min-score 5` → outils/technos classés (vérifier `tools-seen.json`)
-9. `new` → nouveautés uniquement (manifest dict)
-10. `ls claude-global/skills/samuel/youtube-scraper/`
+| `claude-global/youtube_scraper.py` | `_extract_channel_entries` (videos+shorts), tri par date dans `cmd_scrape`, `cmd_report` + sous-parseur, champ `format` |
+| `claude-global/skills/samuel/youtube-scraper/SKILL.md` | section livrable + flux Notion |
+| `claude-global/data/youtube-scrapes/.notion.json` | (gitignoré) ids Notion persistés par l'agent |
+| Notion (via MCP, pas de fichier) | page racine `📺 Veille YouTube (Scraper)` + base récap |
+
+## Exécution Notion — page racine fournie par Samuel
+
+Le bootstrap auto a été bloqué (écritures MCP `requires approval`). Samuel a créé manuellement la page
+racine et fourni son URL : **`38e34dfdcd3b80759e17f8e93e91d979`** (page vide « Nouvelle page »).
+
+Étapes restantes (écritures MCP Notion) :
+1. **Renommer/poser** la page racine en `📺 Veille YouTube (Scraper)` + intro (`notion-update-page`).
+2. **Créer la base** « Chaînes scannées » sous cette page (`notion-create-database`, parent `page_id` =
+   `38e34dfdcd3b80759e17f8e93e91d979`, schéma de la section précédente). Récupérer `data_source_id`.
+3. **Upsert @ia_irl** : `report ia-irl --format both` → créer la ligne (propriétés mappées) + contenu de
+   page = `markdown` (déjà validé : Ponytail 50/100, gpt ×23, 8 vidéos). Idempotent.
+4. Persister `{root_page_id, database_id, data_source_id}` dans `data/youtube-scrapes/.notion.json` (gitignoré).
+5. Rendre l'URL de la base + de la fiche à Samuel.
+
+Si les écritures restent bloquées, repli : commiter la fiche dans `reports/veille-youtube/<slug>.md`.
+
+## Vérification (bout en bout)
+
+1. `python3 youtube_scraper.py scrape https://youtube.com/@ia_irl --max 5` → vérifier vidéos **et** shorts fusionnés, triés par date, champ `format` présent.
+2. `python3 youtube_scraper.py report ia-irl --format md` → fiche Markdown complète (6 sections) ; `--format json` → payload de propriétés cohérent.
+3. Bootstrap Notion : créer la page racine + base ; vérifier le schéma via `notion-fetch`.
+4. Upsert ligne @ia_irl (propriétés + contenu fiche) ; ouvrir la page → table repos + sections rendues.
+5. Re-scan @ia_irl → la **même ligne** est mise à jour (pas de doublon) ; contenu rafraîchi.
+6. Scénario sans repo (ex. `@kagoa_camp`) → fiche correcte avec « Repos : aucun », outils/insights vides, pas de faux positif.
+7. `.notion.json` bien gitignoré (`git check-ignore`).
