@@ -537,15 +537,18 @@ def cmd_scrape(args):
     slug = _slug(chan_name)
 
     videos, repo_urls_seen, partial, non_publiques = [], set(), False, []
-    none_streak = 0
-    detail_opts = {"quiet": True, "skip_download": True, "ignoreerrors": True, **auth}
+    none_streak = fail_streak = 0
+    # ignore_no_formats_error : on ne veut que métadonnées + sous-titres ; sans ffmpeg/runtime JS
+    # la résolution de format échoue ("Requested format is not available") alors qu'on ne télécharge rien.
+    detail_opts = {"quiet": True, "skip_download": True, "ignoreerrors": True,
+                   "ignore_no_formats_error": True, **auth}
     for i, entry in enumerate(all_entries):
         # --max compte les vidéos publiques retenues, pas les entrées brutes : une vidéo
         # membres-only en tête ne doit pas voler un slot ni décaler le classement public.
         if len(videos) >= args.max or len(non_publiques) >= MAX_HIDDEN_SCAN:
             break
-        if none_streak >= THROTTLE_STREAK:
-            break  # série de métadonnées indéterminées → throttle, inutile de continuer à marteler
+        if none_streak >= THROTTLE_STREAK or fail_streak >= THROTTLE_STREAK:
+            break  # série d'indéterminés (throttle) ou d'échecs (extraction cassée) → on arrête de marteler
         if i:
             time.sleep(DETAIL_SLEEP)
         vid = entry.get("id")
@@ -553,9 +556,11 @@ def cmd_scrape(args):
             with yt_dlp.YoutubeDL(detail_opts) as ydl:
                 info = ydl.extract_info(f"https://youtu.be/{vid}", download=False)
         except yt_dlp.utils.DownloadError:
-            continue
+            info = None
         if not info:
+            fail_streak += 1
             continue
+        fail_streak = 0
         # availability != "public" → vidéo réservée aux membres / non répertoriée.
         # On ne la jette pas (potentiellement la plus intéressante) : on la signale à part,
         # et on la note pleinement seulement si --include-hidden (sous-titres rarement accessibles).
