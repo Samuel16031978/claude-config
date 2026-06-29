@@ -56,10 +56,11 @@ python3 youtube_scraper.py scrape <url> [--max N] [--refresh] [--include-hidden]
 Extrait les vidéos → repos GitHub → score chaque repo /100 → maj manifest. `--refresh` ignore le cache.
 `--include-hidden` analyse aussi les vidéos non-publiques (sinon listées à part).
 
-`<url>` accepte : chaîne (`@handle`, `/channel/…`), onglet `/shorts`, **lien direct** d'une vidéo
-(`youtu.be/…`, `watch?v=…`) ou d'un **short** (`/shorts/<id>`). Le même pipeline traite vidéos et
-shorts, avec ou sans lien GitHub (insights + outils sont extraits dans tous les cas). Note : scraper
-une chaîne par `@handle` vise l'onglet `/videos` (long-format) ; pour ses shorts, passe l'URL `…/shorts`.
+`<url>` accepte : chaîne (`@handle`, `/channel/…`), onglet `/videos` ou `/shorts`, **lien direct** d'une
+vidéo (`youtu.be/…`, `watch?v=…`) ou d'un **short** (`/shorts/<id>`). Scraper une chaîne par `@handle`
+**fusionne vidéos + shorts** (dédupliqués, triés par date → les N plus récents toutes catégories) ; pour
+restreindre, passe `…/videos` ou `…/shorts`. Le même pipeline traite tout, avec ou sans lien GitHub
+(insights + outils sont extraits dans tous les cas). Chaque vidéo porte un champ `format` (video|short).
 
 ### 2. Résumé du dernier scrape
 ```bash
@@ -96,6 +97,42 @@ python3 youtube_scraper.py new
 ```bash
 python3 youtube_scraper.py score <github_url> [--refresh]
 ```
+
+### 9. Générer la fiche de veille (livrable)
+```bash
+python3 youtube_scraper.py report <slug> [--format md|json|both]
+```
+`md` = fiche Markdown lisible ; `json` = payload de propriétés (mapping Notion) ; `both` (défaut) = JSON
+incluant la fiche sous la clé `markdown`. La fiche = repos /100 · insights · outils · vidéos non-publiques
+· annexe par vidéo.
+
+## Livrable : fiche de veille → Notion
+
+**Quand Samuel donne une chaîne**, le livrable est une **fiche de veille dans Notion**, dans la base récap
+de la page racine `📺 Veille YouTube (Scraper)`. En Notion, *une ligne de base EST une page* → la base
+récap liste les chaînes (1 ligne = 1 chaîne) et **le contenu de chaque ligne-page = la fiche complète**.
+
+**Flux exécuté par l'agent (via le serveur MCP Notion, pas par le script — aucune clé dans le code) :**
+
+1. **Bootstrap (1×)** — créer la page racine `📺 Veille YouTube (Scraper)` puis la base **Chaînes scannées** :
+   ```sql
+   CREATE TABLE (
+     "Chaîne" TITLE, "URL chaîne" URL, "Date scan" DATE, "Période" RICH_TEXT,
+     "Vidéos" NUMBER, "Shorts" NUMBER, "Repos trouvés" NUMBER,
+     "Top repo" URL, "Top score" NUMBER,
+     "Verdict top" SELECT('🔥':red,'✅':green,'🟡':yellow,'⚪':gray),
+     "Thèmes" MULTI_SELECT('ia':blue,'entrepreneuriat':orange,'mindset':purple,'dev':gray),
+     "Top outils" RICH_TEXT )
+   ```
+   Mémoriser `{root_page_id, database_id, data_source_id}` dans `data/youtube-scrapes/.notion.json` (gitignoré).
+2. **Par scan** — `scrape <url> --max N` puis `report <slug> --format both`. **Upsert** : chercher la
+   chaîne (par titre) dans la base ; créer la ligne sinon mettre à jour ses propriétés depuis le payload ;
+   poser le contenu de la page = la clé `markdown` (`notion-update-page replace_content`). Idempotent.
+3. Rendre l'URL de la page Notion à Samuel + un récap court en chat.
+
+Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_scan→Date scan`, `periode→Période`,
+`nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
+`top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
 ## Grille de scoring /100 (résumé — détail dans scoring-profile.md)
 
