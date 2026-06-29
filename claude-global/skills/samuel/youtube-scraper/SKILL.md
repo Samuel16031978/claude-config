@@ -51,10 +51,15 @@ fréquent sans runtime JS), réessaie plus tard, plus espacé, ou avec des cooki
 
 ### 1. Scraper une chaîne (découverte + scoring)
 ```bash
-python3 youtube_scraper.py scrape <channel_url> [--max N] [--refresh] [--include-hidden]
+python3 youtube_scraper.py scrape <url> [--max N] [--refresh] [--include-hidden]
 ```
 Extrait les vidéos → repos GitHub → score chaque repo /100 → maj manifest. `--refresh` ignore le cache.
 `--include-hidden` analyse aussi les vidéos non-publiques (sinon listées à part).
+
+`<url>` accepte : chaîne (`@handle`, `/channel/…`), onglet `/shorts`, **lien direct** d'une vidéo
+(`youtu.be/…`, `watch?v=…`) ou d'un **short** (`/shorts/<id>`). Le même pipeline traite vidéos et
+shorts, avec ou sans lien GitHub (insights + outils sont extraits dans tous les cas). Note : scraper
+une chaîne par `@handle` vise l'onglet `/videos` (long-format) ; pour ses shorts, passe l'URL `…/shorts`.
 
 ### 2. Résumé du dernier scrape
 ```bash

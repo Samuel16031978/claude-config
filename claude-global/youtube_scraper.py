@@ -46,7 +46,12 @@ DETAIL_SLEEP = 3.0     # pause entre extractions vidéo : sous ~3s YouTube throt
 THROTTLE_STREAK = 5    # N availability=None d'affilée → throttle probable, on bail (les vidéos publiques resettent)
 
 YOUTUBE_URL_RE = re.compile(
-    r"^https?://(www\.)?(youtube\.com/(@[\w\-.]+|channel/[\w\-]+|c/[\w\-.]+)|youtu\.be/[\w\-]+)"
+    r"^https?://(www\.)?("
+    r"youtube\.com/(@[\w\-.]+|channel/[\w\-]+|c/[\w\-.]+|shorts/[\w\-]+|live/[\w\-]+|watch\?v=[\w\-]+)"
+    r"|youtu\.be/[\w\-]+)"
+)
+SINGLE_VIDEO_RE = re.compile(
+    r"(?:youtu\.be/|youtube\.com/(?:shorts/|live/|watch\?v=))([\w\-]{6,})"
 )
 GITHUB_URL_RE = re.compile(r"https?://github\.com/[\w\-.]+/[\w\-.]+")
 GITHUB_ORAL_RE = re.compile(r"github\.com/[\w\-.]+/[\w\-.]+")
@@ -479,8 +484,9 @@ def _aggregate_tools(tools_index, video_id, tools):
 # ── Commands ────────────────────────────────────────────────────────────────────
 
 def _videos_tab_url(url):
-    """Cible l'onglet /videos d'une chaîne (sinon yt-dlp renvoie les onglets/playlists)."""
-    if "youtu.be/" in url or "/watch" in url:
+    """Cible l'onglet /videos d'une chaîne (sinon yt-dlp renvoie les onglets/playlists).
+    Une URL de vidéo/short/live unique est laissée intacte (pas de suffixe /videos)."""
+    if "youtu.be/" in url or "/watch" in url or "/shorts/" in url or "/live/" in url:
         return url
     if re.search(r"/(videos|streams|shorts|featured)/?$", url):
         return url
@@ -488,8 +494,9 @@ def _videos_tab_url(url):
 
 
 def _extract_channel_listing(yt_dlp, flat_opts, url):
-    """Liste les vidéos d'une chaîne. Essaie l'onglet /videos (listing propre, ordre récent),
-    puis retombe sur l'URL brute si la chaîne n'expose pas cet onglet (mise en page atypique)."""
+    """Liste les vidéos d'une cible. Vidéo/short unique → 1 entrée. Chaîne → essaie l'onglet
+    /videos (listing propre, ordre récent), puis retombe sur l'URL brute si l'onglet manque."""
+    single = SINGLE_VIDEO_RE.search(url)
     candidates = [_videos_tab_url(url)]
     if url not in candidates:
         candidates.append(url)
@@ -497,10 +504,19 @@ def _extract_channel_listing(yt_dlp, flat_opts, url):
         try:
             with yt_dlp.YoutubeDL(flat_opts) as ydl:
                 chan = ydl.extract_info(candidate, download=False)
-            if chan and (chan.get("entries") or chan.get("id")):
-                return chan
         except yt_dlp.utils.DownloadError:
             continue
+        if not chan:
+            continue
+        # Cible = une seule vidéo/short : yt-dlp renvoie ses métadonnées sans `entries`.
+        # On synthétise une liste à 1 entrée pour réutiliser le pipeline de scrape.
+        if not chan.get("entries") and chan.get("id"):
+            chan["entries"] = [{"id": chan["id"], "title": chan.get("title")}]
+            return chan
+        if chan.get("entries"):
+            return chan
+    if single:
+        return {"title": "video", "entries": [{"id": single.group(1)}]}
     raise SystemExit(f"❌ impossible de lister les vidéos de {url} "
                      "(chaîne introuvable, supprimée, ou throttle YouTube — réessaie plus tard)")
 
