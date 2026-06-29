@@ -1,4 +1,57 @@
-# Plan — Livrable « Fiche de veille chaîne » → Notion
+# Plan — Révision scoring v2 (veille ≥70, décentré Claude) + fenêtre 3 mois
+
+## Context (révision en cours)
+
+Le livrable Notion est **livré** (page racine + base « Chaînes scannées » + 1ʳᵉ ligne @ia_irl). Samuel veut maintenant : (1) **MAJ description PR #6** ; (2) **revoir le scoring** — la veille commence à **70** et la grille ne doit **plus être centrée sur les repos Claude** (le contenu Claude = bonus / 2ᵉ filtre) ; (3) **re-scraper @ia_irl sur les 3 derniers mois** (au lieu de `--max N`).
+
+### Nouvelle échelle de verdict (décision Samuel)
+`⚪ <70 ignorer` · `🟡 70-84 garder en veille` · `✅ 85-94 solide` · `🔥 95+ pépite`. (4 paliers conservés → SELECT Notion inchangé.)
+
+### Rééquilibrage des axes (décentré Claude)
+| Axe | Avant | Après | Sous-points après |
+|---|---|---|---|
+| AXE 1 — Contenu Claude (bonus) | 35 | **10** | `.claude/`=3 · skills 1=1/2-3=2/4+=3 · agents=2 · commands+hooks both=2/one=1 |
+| AXE 2 — Qualité | 25 | **40** | stars >1k=16/500=13/100=10/20=6/<20=3 · récence <1mo=15/<3mo=11/<6mo=7/<1an=3 · README >5k=9/>1k=6/présent=3 |
+| AXE 3 — Thématique | 20 | **30** | 6 pts par thème matché, plafond 30 |
+| AXE 4 — Personnel | 20 | **20** | inchangé (projet 0/6/12 + outil 0/4/8) |
+- Total 100. **Non-Claude max = 90** (solide atteignable). **Qualité+Thème = 70** = plancher veille sans Claude.
+- AXE 4 basse confiance reste **exclu du verdict** (comportement inchangé).
+- L'ancienne note « plafond 65 non-Claude » est **supprimée** (c'était l'effet Claude-centré qu'on retire).
+
+## Changements de code
+
+### 1. `youtube_scraper.py`
+- `_verdict` (l.357) : seuils → `>=95 🔥`, `>=85 ✅`, `>=70 🟡`, sinon `⚪`.
+- `_score_axe1_claude` (l.288) : rescale à max 10 (sous-points ci-dessus).
+- `_score_axe2_qualite` (l.306) : rescale à max 40 (star/récence/readme).
+- `_recency_points` (l.318) : retourne 15/11/7/3/0 (pour coller au max 40).
+- `_score_axe3_theme` (l.326) : `min(30, len(matched)*6)`.
+- `_score_axe4_perso` (l.335) : inchangé.
+- **Fenêtre 3 mois** dans `cmd_scrape` : nouvel arg `--months N` (et `--since YYYY-MM-DD`). Calcul `cutoff` (≈ `date.today() - N*30.4 j`, format `YYYYMMDD`). Quand une fenêtre est donnée : `per_tab_limit` élargi (≈200) ; dans la boucle, on **arrête le scan d'un format** dès qu'une vidéo a `upload_date < cutoff` (onglets triés récent→ancien) et on **ne tronque pas** à `--max` (on garde toute la fenêtre). Sans fenêtre : comportement `--max` actuel inchangé. Réutilise `_extract_channel_entries`, garde `fail_streak`/`none_streak`.
+
+### 2. `.claude/memory/scoring-profile.md`
+- Table des 4 axes (nouveaux points + sous-règles), ancres de verdict (70/85/95), **retrait** de la note plafond-65 → remplacée par « non-Claude atteint 90 (solide) ; pépite 95+ exige le bonus Claude ».
+
+### 3. `skills/samuel/youtube-scraper/SKILL.md`
+- Table résumé scoring (l.~100) : nouveaux points + verdict 70/85/95.
+- Doc option `--months N` / `--since` dans l'opération `scrape`.
+
+## Actions post-implémentation
+1. **Re-scrape** `scrape https://youtube.com/@ia_irl --months 3 --refresh` → re-note tous les repos avec la grille v2.
+2. **report ia-irl --format both** → **upsert** la ligne @ia_irl existante dans Notion (mise à jour des propriétés + contenu, pas de doublon — retrouver la ligne par titre « IA IRL »).
+3. **MAJ description PR #6** (`mcp__github__update_pull_request`) avec le récap final (scraper + livrable Notion + scoring v2).
+4. Commit + push (code + profil + SKILL).
+
+## Vérification
+1. `_verdict(70)→🟡`, `_verdict(84)→🟡`, `_verdict(85)→✅`, `_verdict(95)→🔥`, `_verdict(69)→⚪`.
+2. Re-score un repo non-Claude excellent et on-thème → atteint ≥70 (preuve décentralisation). Re-score `anthropics/claude-code` → reste élevé (bonus Claude).
+3. `scrape @ia_irl --months 3` → toutes vidéos `upload_date ≥ cutoff`, plus de 8 vidéos, scan s'arrête au-delà de la fenêtre.
+4. Ligne Notion @ia_irl mise à jour (mêmes id/page, score recalculé) — pas de 2ᵉ ligne.
+5. PR #6 description à jour.
+
+---
+
+# (Archivé) Plan — Livrable « Fiche de veille chaîne » → Notion
 
 ## Context
 
