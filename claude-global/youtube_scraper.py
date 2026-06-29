@@ -482,6 +482,24 @@ def _videos_tab_url(url):
     return url.rstrip("/") + "/videos"
 
 
+def _extract_channel_listing(yt_dlp, flat_opts, url):
+    """Liste les vidéos d'une chaîne. Essaie l'onglet /videos (listing propre, ordre récent),
+    puis retombe sur l'URL brute si la chaîne n'expose pas cet onglet (mise en page atypique)."""
+    candidates = [_videos_tab_url(url)]
+    if url not in candidates:
+        candidates.append(url)
+    for candidate in candidates:
+        try:
+            with yt_dlp.YoutubeDL(flat_opts) as ydl:
+                chan = ydl.extract_info(candidate, download=False)
+            if chan and (chan.get("entries") or chan.get("id")):
+                return chan
+        except yt_dlp.utils.DownloadError:
+            continue
+    raise SystemExit(f"❌ impossible de lister les vidéos de {url} "
+                     "(chaîne introuvable, supprimée, ou throttle YouTube — réessaie plus tard)")
+
+
 def _flatten_entries(node):
     """Aplatit les entrées : une chaîne peut imbriquer des playlists d'entrées."""
     out = []
@@ -508,8 +526,7 @@ def cmd_scrape(args):
 
     auth = _yt_auth_opts()
     flat_opts = {"extract_flat": True, "quiet": True, "skip_download": True, **auth}
-    with yt_dlp.YoutubeDL(flat_opts) as ydl:
-        chan = ydl.extract_info(_videos_tab_url(url), download=False)
+    chan = _extract_channel_listing(yt_dlp, flat_opts, url)
     all_entries = [e for e in _flatten_entries(chan) if e.get("id")]
     chan_name = chan.get("uploader") or re.sub(r"\s*-\s*Videos$", "", chan.get("title") or "channel")
     slug = _slug(chan_name)
