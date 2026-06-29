@@ -30,7 +30,7 @@ import time
 import argparse
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data", "youtube-scrapes")
 REPOS_FILE = os.path.join(DATA_DIR, "repos-scored.json")
@@ -126,6 +126,18 @@ def _slug(text):
 
 def _now():
     return datetime.now(timezone.utc)
+
+
+def _compute_cutoff(args):
+    """Borne basse de date (str 'YYYYMMDD') pour une fenêtre temporelle, sinon None.
+    --since YYYY-MM-DD prévaut sur --months N (≈ N×30.4 jours)."""
+    since = getattr(args, "since", None)
+    if since:
+        return since.replace("-", "")
+    months = getattr(args, "months", None)
+    if months:
+        return (_now() - timedelta(days=round(months * 30.4))).strftime("%Y%m%d")
+    return None
 
 
 # ── URL normalisation ───────────────────────────────────────────────────────────
@@ -294,24 +306,26 @@ def _score_axe1_claude(tree, truncated):
     has_hooks = any("hooks/" in p for p in paths)
     if truncated and not (has_claude or nb_skills):
         return None, {"axe1": "unknown (arbre tronqué)"}
-    skills_pts = 10 if nb_skills >= 4 else 7 if nb_skills >= 2 else 4 if nb_skills == 1 else 0
-    agents_pts = 8 if has_agents else 0
-    ch_pts = 7 if (has_commands and has_hooks) else 4 if (has_commands or has_hooks) else 0
-    total = (10 if has_claude else 0) + skills_pts + agents_pts + ch_pts
+    # AXE 1 = bonus (max 10) : le contenu Claude affine la veille sans la dominer.
+    skills_pts = 3 if nb_skills >= 4 else 2 if nb_skills >= 2 else 1 if nb_skills == 1 else 0
+    agents_pts = 2 if has_agents else 0
+    ch_pts = 2 if (has_commands and has_hooks) else 1 if (has_commands or has_hooks) else 0
+    total = (3 if has_claude else 0) + skills_pts + agents_pts + ch_pts
     details = {"a_dossier_claude": has_claude, "nb_skills": nb_skills,
                "agents": has_agents, "commands": has_commands, "hooks": has_hooks}
     return total, details
 
 
 def _score_axe2_qualite(repo, tree):
+    # AXE 2 = max 40 (moteur principal de la veille).
     stars = repo.get("stargazers_count", 0)
-    star_pts = 10 if stars > 1000 else 8 if stars >= 500 else 6 if stars >= 100 \
-        else 4 if stars >= 20 else 2
+    star_pts = 16 if stars > 1000 else 13 if stars >= 500 else 10 if stars >= 100 \
+        else 6 if stars >= 20 else 3
     pushed = repo.get("pushed_at", "")
     act_pts = _recency_points(pushed)
     readme_size = next((t.get("size", 0) for t in tree
                         if t.get("path", "").lower() in ("readme.md", "readme.rst", "readme.txt")), 0)
-    doc_pts = 7 if readme_size > 5000 else 5 if readme_size > 1000 else 3 if readme_size else 0
+    doc_pts = 9 if readme_size > 5000 else 6 if readme_size > 1000 else 3 if readme_size else 0
     return star_pts + act_pts + doc_pts, {"stars": stars, "pushed_at": pushed[:10]}
 
 
@@ -320,16 +334,17 @@ def _recency_points(pushed_at):
         return 0
     pushed = datetime.fromisoformat(pushed_at.replace("Z", "+00:00"))
     days = (_now() - pushed).days
-    return 8 if days < 31 else 6 if days < 92 else 4 if days < 183 else 2 if days < 366 else 0
+    return 15 if days < 31 else 11 if days < 92 else 7 if days < 183 else 3 if days < 366 else 0
 
 
 def _score_axe3_theme(repo, tree, themes):
+    # AXE 3 = max 30 (6 pts par thème surveillé matché).
     haystack = " ".join([
         repo.get("description") or "", " ".join(repo.get("topics") or []),
         " ".join(t.get("path", "") for t in tree[:50]),
     ]).lower()
     matched = [th for th in themes if th in haystack]
-    return min(20, len(matched) * 4), matched
+    return min(30, len(matched) * 6), matched
 
 
 def _score_axe4_perso(repo, tree, projets):
@@ -355,11 +370,11 @@ def _score_axe4_perso(repo, tree, projets):
 
 
 def _verdict(score):
-    if score >= 85:
+    if score >= 95:
         return "🔥 Pépite — explorer en priorité"
-    if score >= 70:
+    if score >= 85:
         return "✅ Solide — vaut le détour"
-    if score >= 50:
+    if score >= 70:
         return "🟡 Intéressant — garder en veille"
     return "⚪ Marginal — ignorer sauf besoin précis"
 
@@ -595,11 +610,14 @@ def cmd_scrape(args):
     repos_scored = _read_json(REPOS_FILE, {})
     tools_index = _read_json(TOOLS_FILE, {})
 
+    cutoff = _compute_cutoff(args)
+    windowed = cutoff is not None
     auth = _yt_auth_opts()
     flat_opts = {"extract_flat": True, "quiet": True, "skip_download": True, **auth}
-    # Tête généreuse par onglet : assez profond pour atteindre `max` publiques en sautant
-    # d'éventuelles non-publiques intercalées, sans scanner toute la chaîne.
-    all_entries, chan = _extract_channel_entries(yt_dlp, flat_opts, url, args.max + MAX_HIDDEN_SCAN)
+    # Fenêtre date → tête large (on s'arrête à la borne). Sinon tête = max + marge pour sauter
+    # d'éventuelles non-publiques intercalées sans scanner toute la chaîne.
+    per_tab = 200 if windowed else args.max + MAX_HIDDEN_SCAN
+    all_entries, chan = _extract_channel_entries(yt_dlp, flat_opts, url, per_tab)
     chan_name = chan.get("uploader") or re.sub(r"\s*-\s*Videos$", "", chan.get("title") or "channel")
     slug = _slug(chan_name)
 
@@ -610,14 +628,18 @@ def cmd_scrape(args):
     detail_opts = {"quiet": True, "skip_download": True, "ignoreerrors": True,
                    "ignore_no_formats_error": True, **auth}
     kept = {"video": 0, "short": 0}
+    done = {"video": False, "short": False}  # format dont on a dépassé la fenêtre (mode --months/--since)
     extracted_any = False
     for entry in all_entries:
         fmt = entry.get("format", "video")
-        # Arrêt par format : on collecte jusqu'à `max` publiques de chaque type (vidéos ET shorts),
-        # puis on triera/tronquera à `max` toutes catégories confondues.
-        if kept[fmt] >= args.max:
+        if done[fmt]:
             continue
-        if kept["video"] >= args.max and kept["short"] >= args.max:
+        # Mode fenêtre : on garde tout dans la fenêtre. Sinon : arrêt par format à `max` publiques.
+        if not windowed and kept[fmt] >= args.max:
+            continue
+        if windowed and done["video"] and done["short"]:
+            break
+        if not windowed and kept["video"] >= args.max and kept["short"] >= args.max:
             break
         if len(non_publiques) >= MAX_HIDDEN_SCAN:
             break
@@ -636,6 +658,11 @@ def cmd_scrape(args):
             fail_streak += 1
             continue
         fail_streak = 0
+        # Onglet trié récent→ancien : la 1ʳᵉ vidéo hors fenêtre clôt le scan de ce format.
+        up = info.get("upload_date")
+        if windowed and up and up < cutoff:
+            done[fmt] = True
+            continue
         # availability != "public" → vidéo réservée aux membres / non répertoriée.
         # On ne la jette pas (potentiellement la plus intéressante) : on la signale à part,
         # et on la note pleinement seulement si --include-hidden (sous-titres rarement accessibles).
@@ -670,10 +697,11 @@ def cmd_scrape(args):
         })
         kept[fmt] += 1
 
-    # Tri par date décroissante puis tronquage à --max : les N plus récents toutes catégories
-    # (vidéos + shorts) — l'ordre inter-onglets n'est fiable qu'après extraction détaillée.
+    # Tri par date décroissante. Sans fenêtre : tronquage aux N plus récents toutes catégories.
+    # Avec fenêtre (--months/--since) : on garde tout l'intervalle (pas de tronquage).
     videos.sort(key=lambda v: v.get("upload_date") or "0", reverse=True)
-    videos = videos[: args.max]
+    if not windowed:
+        videos = videos[: args.max]
 
     # Agrégation seulement pour les vidéos retenues (sinon les tronquées pollueraient outils/repos).
     for v in videos:
@@ -1025,6 +1053,8 @@ def main():
     p_scrape = sub.add_parser("scrape")
     p_scrape.add_argument("channel_url")
     p_scrape.add_argument("--max", type=int, default=20)
+    p_scrape.add_argument("--months", type=int, help="fenêtre : N derniers mois (ignore --max)")
+    p_scrape.add_argument("--since", help="fenêtre : depuis cette date YYYY-MM-DD (ignore --max)")
     p_scrape.add_argument("--refresh", action="store_true")
     p_scrape.add_argument("--include-hidden", action="store_true", dest="include_hidden",
                           help="inclure les vidéos non publiques (membres/non répertoriées)")

@@ -51,10 +51,12 @@ fréquent sans runtime JS), réessaie plus tard, plus espacé, ou avec des cooki
 
 ### 1. Scraper une chaîne (découverte + scoring)
 ```bash
-python3 youtube_scraper.py scrape <url> [--max N] [--refresh] [--include-hidden]
+python3 youtube_scraper.py scrape <url> [--max N | --months N | --since YYYY-MM-DD] [--refresh] [--include-hidden]
 ```
 Extrait les vidéos → repos GitHub → score chaque repo /100 → maj manifest. `--refresh` ignore le cache.
 `--include-hidden` analyse aussi les vidéos non-publiques (sinon listées à part).
+**Fenêtre temporelle** : `--months N` (N derniers mois) ou `--since YYYY-MM-DD` garde **tout** l'intervalle
+(vidéos + shorts) et ignore `--max`. Sans fenêtre, `--max N` garde les N plus récents toutes catégories.
 
 `<url>` accepte : chaîne (`@handle`, `/channel/…`), onglet `/videos` ou `/shorts`, **lien direct** d'une
 vidéo (`youtu.be/…`, `watch?v=…`) ou d'un **short** (`/shorts/<id>`). Scraper une chaîne par `@handle`
@@ -138,12 +140,13 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 
 | Axe | Points | Mesure |
 |---|---|---|
-| AXE 1 — Contenu Claude | 35 | `.claude/`, skills, agents, commands/hooks |
-| AXE 2 — Qualité | 25 | stars, activité récente, README |
-| AXE 3 — Thématique | 20 | thèmes surveillés (`projets-samuel.json`) |
+| AXE 1 — Contenu Claude (bonus) | 10 | `.claude/`, skills, agents, commands/hooks |
+| AXE 2 — Qualité | 40 | stars, activité récente, README |
+| AXE 3 — Thématique | 30 | thèmes surveillés (`projets-samuel.json`) |
 | AXE 4 — Personnel | 20 | projet actif / outil manquant (avec confiance) |
 
-**Verdict :** 🔥 ≥85 · ✅ 70-84 · 🟡 50-69 · ⚪ <50. Plafond ~65 pour un repo non-Claude (voulu).
+**Verdict :** 🔥 ≥95 · ✅ 85-94 · 🟡 70-84 (veille) · ⚪ <70. Grille **décentrée Claude** : un repo non-Claude
+atteint 90 (Qualité+Thème+Perso) ; le contenu Claude n'est qu'un bonus vers la pépite (95+).
 
 ## Règles d'utilisation
 
