@@ -152,6 +152,11 @@ def extract_github_links(description, transcript):
         canon = canonical_github_url(url)
         if canon:
             found.setdefault(canon, {"source": "transcription", "confiance": "haute"})
+    # Liens écrits mais sans protocole dans la description (ex: "github.com/user/repo")
+    for match in GITHUB_ORAL_RE.findall((description or "").lower()):
+        canon = canonical_github_url(f"https://{match}")
+        if canon:
+            found.setdefault(canon, {"source": "description", "confiance": "haute"})
     normalized = (transcript or "").lower()
     for spoken, char in ORAL_REPLACEMENTS:
         normalized = normalized.replace(spoken, char)
