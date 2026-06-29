@@ -2,6 +2,10 @@
 .env.local
 .env
 
+# Cookies de session YouTube (jetons sensibles — jamais commités)
+*cookies*.txt
+claude-global/.cookies/
+
 # Bundles de skills générés par sync_skills.py (reconstructibles à la demande)
 claude-global/dist/
 __pycache__/
