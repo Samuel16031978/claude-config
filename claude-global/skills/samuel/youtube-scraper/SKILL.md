@@ -141,6 +141,25 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 `nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
 `top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
+## Phase 2 — auto-routage des idées → Boîte à Idées
+
+**Après CHAQUE scrape** (routine automatique de l'agent, décision Samuel), router les idées-à-approfondir vers
+sa base **`💡 Boîte à Idées - Projets`** (ids dans `data/youtube-scrapes/.notion.json` : `boite_idees_data_source_id`).
+Le scraper parle déjà sa langue — `Potentiel` 🔥/⚡/💡 mappe à l'identique.
+
+Flux (via MCP Notion, aucune clé dans le code) :
+1. `report <slug> --format json` → clé `idees` (triées, `{url, score, potentiel, theme}`).
+2. **Filtrer `potentiel ∈ {🔥, ⚡}`** (on ignore 💡 Faible — bruit).
+3. **Dédup par URL** : `notion-query-data-sources` SQL `WHERE "userDefined:URL" LIKE '%<repo>%'` → si présent, **skip**.
+4. Sinon `notion-create-pages` (parent = `data_source_id` de la Boîte à Idées) avec :
+   `Nom du Projet` = `<repo> (veille <chaîne>)` · `userDefined:URL` = url · `Potentiel` = `🔥 Élevé`/`⚡ Moyen` ·
+   **`Décision` = `À évaluer`** (entre dans le triage idée→roadmap) · `Description` = thème + score + source ·
+   `date:Date d'ajout:start` = jour.
+5. Rendre à Samuel la liste des idées ajoutées (et ignorées car déjà présentes).
+
+> Idempotent par URL : re-scraper ne crée pas de doublon. Destinations Apprentissage-par-thème / log Veille
+> GitHub / Chaînes-à-explorer = sous-étapes suivantes (la base Apprentissage du PRD reste à créer).
+
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 
 **Moteur /100** (sobre, video-agnostique) :
