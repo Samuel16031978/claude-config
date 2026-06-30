@@ -141,6 +141,46 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 `nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
 `top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
+## Phase 2 — auto-routage **conscient du thème** (après chaque scrape)
+
+Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-scrapes/.notion.json`) :
+- **Thèmes PROJET** (`themes_projet` : ia, automatisation, dev, business, btp, trading-finance) = à *construire*.
+- **Thèmes SAVOIR** (`themes_savoir` : sport, mindset, developpement-personnel, divers) = à *apprendre*.
+
+> ⚠️ La `💡 Boîte à Idées - Projets` est une boîte **business/projets** — n'y router QUE les thèmes projet.
+> Un savoir (sport/santé/dev-perso) va dans la base **Apprentissage**, jamais dans la Boîte à Idées.
+
+### A. Idées-à-approfondir (repos 🔥/⚡) → Boîte à Idées *(thèmes projet uniquement)*
+1. `report <slug> --format json` → clé `idees` (`{url, score, potentiel, theme}`).
+2. Garder `potentiel ∈ {🔥, ⚡}` **ET `theme ∈ themes_projet`** (un repo-idée de thème savoir → étape B).
+3. **Dédup par URL** : `notion-query-data-sources` SQL sur `boite_idees_data_source_id`,
+   `WHERE "userDefined:URL" LIKE '%<repo>%'` → si présent, **skip**.
+4. Sinon `notion-create-pages` (parent `boite_idees_data_source_id`) : `Nom du Projet`, `userDefined:URL`,
+   `Potentiel` (`🔥 Élevé`/`⚡ Moyen`), **`Décision` = `À évaluer`**, `Description`, `date:Date d'ajout:start`.
+
+### B. Insights → base Apprentissage *(tous thèmes, routés par thème)*
+1. Clé `insights` (`{texte, topic, relevance, destination}`).
+2. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = texte · `Thème` = topic ·
+   `Type` = destination (cultiver/process/meta-erreur/meta-bonne-pratique) · `Chaîne` · `Vidéo` · `Pertinence` · `Date`.
+3. Filtrer par `Thème` dans Notion pour réviser un domaine (KPI PRD : retrouver un insight en <30 s).
+
+### C. Outils-à-installer (repos Claude) → base 🔧 Outils à installer/surveiller
+1. Clé `repos` du report → garder `verdict_outil.palier ∈ {✅ installer, 👁 surveiller}` (gate `.claude/` déjà appliqué).
+2. **Dédup par URL** : SQL sur `outils_data_source_id`, `WHERE "userDefined:URL" LIKE '%<repo>%'` → skip si présent.
+3. Sinon `notion-create-pages` (parent `outils_data_source_id`) : `Repo` · `Palier` · `Score` · `Stars` ·
+   `Domaines` · `Chaîne source` · `userDefined:URL` · `Date`.
+
+### D. Chaînes liées → base 📡 Chaînes à explorer (file de découverte)
+1. Clé `chaines_liees` du report (`{ref, url}`).
+2. **Dédup par URL** : SQL sur `chaines_data_source_id` → skip si présent.
+3. Sinon `notion-create-pages` (parent `chaines_data_source_id`) : `Chaîne` = ref · `userDefined:URL` ·
+   `Découverte via` = chaîne courante · `Statut` = `🆕 à scraper` · `Date`.
+
+### E. Rendre à Samuel le récap : idées · insights par thème · outils · chaînes à explorer · ignorés (déjà présents).
+
+> **Routage Phase 2 complet** (4 destinations, idempotentes par URL). Reste la boucle méta Phase 3
+> (exploiter les insights `Type = meta-*` → mémoire de l'agent).
+
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 
 **Moteur /100** (sobre, video-agnostique) :

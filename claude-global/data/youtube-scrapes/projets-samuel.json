@@ -5,7 +5,8 @@
     {"nom": "automatisation", "poids": "fort", "keywords": ["n8n", "make", "zapier", "workflow", "webhook", "automation", "automatisation", "monday", "airtable", "notion", "planning", "crm"]},
     {"nom": "dev", "poids": "moyen", "keywords": ["dev", "code", "framework", "api", "typescript", "javascript", "python", "react", "devops", "sdk", "cli", "git"]},
     {"nom": "btp", "poids": "moyen", "keywords": ["btp", "construction", "renovation", "rénovation", "chantier", "devis", "obat", "batiment", "bâtiment"]},
-    {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "entrainement", "fitness", "garmin", "intervals", "keto", "health", "santé", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "récupération", "recovery", "microbiote", "vitamine", "natation", "swim"]},
+    {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "entrainement", "fitness", "garmin", "intervals", "natation", "swim", "swimming", "freestyle", "stroke", "kick", "catch", "endurance", "workout", "recovery", "récupération", "cardio", "ftp"]},
+    {"nom": "sante", "poids": "moyen", "keywords": ["santé", "health", "keto", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "microbiote", "vitamine", "cancer", "bien-être", "repos", "régime", "métabolisme"]},
     {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente", "revenus", "revenue", "freelance", "solopreneur", "mrr", "client", "monetisation", "scaling"]},
     {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]},
     {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]},
@@ -31,5 +32,5 @@
     "n8n": ["n8n", "workflow.json", "nodes/"],
     "monday": ["monday.com", "mondaycom", "monday-api"]
   },
-  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "business", "trading-finance", "developpement-personnel", "mindset", "divers"]
+  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "sante", "business", "trading-finance", "developpement-personnel", "mindset", "divers"]
 }
