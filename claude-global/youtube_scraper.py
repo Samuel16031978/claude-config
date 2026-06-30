@@ -612,6 +612,56 @@ def _shorts_tab_url(url):
     return base + "/shorts"
 
 
+def _channels_tab_url(url):
+    base = re.sub(r"/(videos|streams|shorts|featured|channels)/?$", "", url.rstrip("/"))
+    return base + "/channels"
+
+
+# Références de chaîne YouTube en écrit : URL de chaîne + @handle nu (hors URL/email).
+YT_CHANNEL_URL_RE = re.compile(
+    r"youtube\.com/(@[\w.\-]{3,30}|channel/UC[\w\-]{20,30}|c/[\w.\-]{2,40}|user/[\w.\-]{2,40})", re.I)
+YT_HANDLE_RE = re.compile(r"(?<![\w@/.])@([A-Za-z0-9][\w.\-]{2,29})\b")
+
+
+def extract_linked_channels(texts, self_refs):
+    """Détecte les chaînes liées (annexes/complémentaires) citées en écrit : URLs de chaîne +
+    @handles dans les descriptions et l'onglet « en vedette ». Exclut la chaîne courante.
+    Alimente une file « à scraper plus tard » (découverte par effet de réseau)."""
+    self_low = {str(s).lower().lstrip("@").rstrip("/").split("/")[-1] for s in self_refs if s}
+    found = {}
+    for t in texts:
+        if not t:
+            continue
+        refs = [m.group(1) for m in YT_CHANNEL_URL_RE.finditer(t)]
+        refs += ["@" + m.group(1) for m in YT_HANDLE_RE.finditer(t)]
+        for ref in refs:
+            ref = ref.rstrip("/")
+            key = ref.lower()
+            ident = key.lstrip("@").split("/")[-1]
+            if ident in self_low or key in found:
+                continue
+            found[key] = {"ref": ref, "url": f"https://youtube.com/{ref}"}
+    return list(found.values())
+
+
+def _featured_channel_texts(yt_dlp, flat_opts, url):
+    """Best-effort : URLs des chaînes de l'onglet « en vedette » (parsées par extract_linked_channels).
+    Renvoie [] sur toute erreur — ne casse jamais le scrape."""
+    try:
+        with yt_dlp.YoutubeDL(flat_opts) as ydl:
+            node = ydl.extract_info(_channels_tab_url(url), download=False)
+    except Exception:
+        return []
+    out = []
+    for e in _flatten_entries(node or {}):
+        out.append(e.get("url") or "")
+        out.append(e.get("uploader_url") or "")
+        uid = e.get("uploader_id")
+        if uid:
+            out.append(uid if str(uid).startswith("@") else f"https://youtube.com/channel/{uid}")
+    return out
+
+
 def _extract_channel_entries(yt_dlp, flat_opts, url, per_tab_limit):
     """Entrées {id, format} fusionnées vidéos + shorts, dédupliquées par id.
     - vidéo/short unique → 1 entrée
@@ -679,6 +729,7 @@ def cmd_scrape(args):
     chan_name = chan.get("uploader") or re.sub(r"\s*-\s*Videos$", "", chan.get("title") or "channel")
     slug = _slug(chan_name)
 
+    link_texts, chaines_liees = [chan.get("description") or ""], []
     videos, repo_urls_seen, partial, non_publiques = [], set(), False, []
     none_streak = fail_streak = 0
     # ignore_no_formats_error : on ne veut que métadonnées + sous-titres ; sans ffmpeg/runtime JS
@@ -739,6 +790,7 @@ def cmd_scrape(args):
             continue
         transcript = _fetch_transcript(info)
         desc = info.get("description") or ""
+        link_texts.append(desc)
         analysis_source = "transcription" if transcript else "description"
         text = transcript or desc
         links = extract_github_links(desc, transcript)
@@ -784,9 +836,16 @@ def cmd_scrape(args):
     n_shorts = sum(1 for v in videos if v.get("format") == "short")
     # Sous throttle, la classification est fausse : on ne clobber pas le channel doc précédent.
     if not throttled:
+        self_refs = [chan_name, chan.get("uploader_id"), chan.get("channel_id")]
+        mh = re.search(r"@([\w.\-]+)", url)
+        if mh:
+            self_refs.append(mh.group(1))
+        chaines_liees = extract_linked_channels(
+            link_texts + _featured_channel_texts(yt_dlp, flat_opts, url), self_refs)
         channel_doc = {"channel": chan_name, "slug": slug, "url": url,
                        "scraped_at": run_ts, "video_count": n_videos, "short_count": n_shorts,
-                       "videos": videos, "non_publiques": non_publiques}
+                       "videos": videos, "non_publiques": non_publiques,
+                       "chaines_liees": chaines_liees}
         manifest["last_scraped"] = run_ts
         _write_json_atomic(os.path.join(DATA_DIR, f"{slug}.json"), channel_doc)
         _write_json_atomic(REPOS_FILE, repos_scored)
@@ -814,6 +873,7 @@ def cmd_scrape(args):
         "repos_trouves": len(repo_urls_seen), "repos_notes": len(repos_scored),
         "top_repos": [{"url": r["url"], "score": r["scores"]["total_100"], "verdict": r["verdict"]}
                       for r in top],
+        "chaines_liees": [c["ref"] for c in chaines_liees],
         "astuce": "→ `report " + slug + "` pour générer la fiche de veille",
     }, indent=2, ensure_ascii=False))
 
@@ -1075,6 +1135,7 @@ def _build_report(slug, doc, repos_scored, tools_seen):
         "repos": repos, "insights": insights[:10], "outils": outils[:12],
         "idees": idees[:10], "destinations": dest_tally,
         "non_publiques": doc.get("non_publiques", []),
+        "chaines_liees": doc.get("chaines_liees", []),
     }
 
 
@@ -1128,6 +1189,14 @@ def _fiche_markdown(rep):
         L.append(" · ".join(f"{o['nom']} (×{o['mentions']})" for o in rep["outils"]))
     else:
         L.append("_Aucun outil détecté._")
+    L.append("")
+
+    L.append("## 📡 Chaînes liées (à scraper plus tard)")
+    if rep.get("chaines_liees"):
+        for c in rep["chaines_liees"]:
+            L.append(f"- {c['ref']} — {c['url']}")
+    else:
+        L.append("_Aucune détectée._")
     L.append("")
 
     L.append("## 🔒 Vidéos non-publiques à creuser")

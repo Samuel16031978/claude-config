@@ -106,8 +106,12 @@ python3 youtube_scraper.py score <github_url> [--refresh]
 python3 youtube_scraper.py report <slug> [--format md|json|both]
 ```
 `md` = fiche Markdown lisible ; `json` = payload de propriétés (mapping Notion) ; `both` (défaut) = JSON
-incluant la fiche sous la clé `markdown`. La fiche = repos /100 · insights · outils · vidéos non-publiques
-· annexe par vidéo.
+incluant la fiche sous la clé `markdown`. La fiche = repos /100 (2 verdicts) · idées à approfondir · insights
+taggés · **chaînes liées (à scraper plus tard)** · vidéos non-publiques · annexe par vidéo.
+
+**Découverte de chaînes liées** : au `scrape`, l'outil détecte les chaînes annexes/complémentaires du
+youtubeur (URLs de chaîne + `@handles` dans les descriptions + onglet « en vedette »), hors chaîne courante,
+exposées dans `chaines_liees` → une file « à scraper plus tard » (la veille s'auto-alimente par effet de réseau).
 
 ## Livrable : fiche de veille → Notion
 
