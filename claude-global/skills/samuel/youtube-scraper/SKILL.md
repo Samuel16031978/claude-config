@@ -141,24 +141,33 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 `nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
 `top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
-## Phase 2 — auto-routage des idées → Boîte à Idées
+## Phase 2 — auto-routage **conscient du thème** (après chaque scrape)
 
-**Après CHAQUE scrape** (routine automatique de l'agent, décision Samuel), router les idées-à-approfondir vers
-sa base **`💡 Boîte à Idées - Projets`** (ids dans `data/youtube-scrapes/.notion.json` : `boite_idees_data_source_id`).
-Le scraper parle déjà sa langue — `Potentiel` 🔥/⚡/💡 mappe à l'identique.
+Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-scrapes/.notion.json`) :
+- **Thèmes PROJET** (`themes_projet` : ia, automatisation, dev, business, btp, trading-finance) = à *construire*.
+- **Thèmes SAVOIR** (`themes_savoir` : sport, mindset, developpement-personnel, divers) = à *apprendre*.
 
-Flux (via MCP Notion, aucune clé dans le code) :
-1. `report <slug> --format json` → clé `idees` (triées, `{url, score, potentiel, theme}`).
-2. **Filtrer `potentiel ∈ {🔥, ⚡}`** (on ignore 💡 Faible — bruit).
-3. **Dédup par URL** : `notion-query-data-sources` SQL `WHERE "userDefined:URL" LIKE '%<repo>%'` → si présent, **skip**.
-4. Sinon `notion-create-pages` (parent = `data_source_id` de la Boîte à Idées) avec :
-   `Nom du Projet` = `<repo> (veille <chaîne>)` · `userDefined:URL` = url · `Potentiel` = `🔥 Élevé`/`⚡ Moyen` ·
-   **`Décision` = `À évaluer`** (entre dans le triage idée→roadmap) · `Description` = thème + score + source ·
-   `date:Date d'ajout:start` = jour.
-5. Rendre à Samuel la liste des idées ajoutées (et ignorées car déjà présentes).
+> ⚠️ La `💡 Boîte à Idées - Projets` est une boîte **business/projets** — n'y router QUE les thèmes projet.
+> Un savoir (sport/santé/dev-perso) va dans la base **Apprentissage**, jamais dans la Boîte à Idées.
 
-> Idempotent par URL : re-scraper ne crée pas de doublon. Destinations Apprentissage-par-thème / log Veille
-> GitHub / Chaînes-à-explorer = sous-étapes suivantes (la base Apprentissage du PRD reste à créer).
+### A. Idées-à-approfondir (repos 🔥/⚡) → Boîte à Idées *(thèmes projet uniquement)*
+1. `report <slug> --format json` → clé `idees` (`{url, score, potentiel, theme}`).
+2. Garder `potentiel ∈ {🔥, ⚡}` **ET `theme ∈ themes_projet`** (un repo-idée de thème savoir → étape B).
+3. **Dédup par URL** : `notion-query-data-sources` SQL sur `boite_idees_data_source_id`,
+   `WHERE "userDefined:URL" LIKE '%<repo>%'` → si présent, **skip**.
+4. Sinon `notion-create-pages` (parent `boite_idees_data_source_id`) : `Nom du Projet`, `userDefined:URL`,
+   `Potentiel` (`🔥 Élevé`/`⚡ Moyen`), **`Décision` = `À évaluer`**, `Description`, `date:Date d'ajout:start`.
+
+### B. Insights → base Apprentissage *(tous thèmes, routés par thème)*
+1. Clé `insights` (`{texte, topic, relevance, destination}`).
+2. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = texte · `Thème` = topic ·
+   `Type` = destination (cultiver/process/meta-erreur/meta-bonne-pratique) · `Chaîne` · `Vidéo` · `Pertinence` · `Date`.
+3. Filtrer par `Thème` dans Notion pour réviser un domaine (KPI PRD : retrouver un insight en <30 s).
+
+### C. Rendre à Samuel le récap : idées ajoutées · insights routés par thème · idées ignorées (déjà présentes).
+
+> Idempotent par URL côté Boîte à Idées. Destinations restantes (sous-étapes) : log Veille GitHub (outils-à-installer),
+> Chaînes-à-explorer (`chaines_liees`), et la boucle méta Phase 3 (insights `Type = meta-*`).
 
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 
