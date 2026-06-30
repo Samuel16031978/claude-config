@@ -14,6 +14,14 @@
 - 2026-06-27 sécurité : le skill `skill-sync-notion` (édité dans claude.ai) contenait un **token OAuth Anthropic et un token Notion en clair**. Rédigés avant tout commit, remplacés par des variables d'env. **Règle : jamais de token en dur dans un SKILL.md ; scanner avant chaque commit.** Tokens exposés → à révoquer/régénérer.
 - 2026-06-27 sens de sync : Samuel édite ses skills **dans claude.ai**, pas dans GitHub. Le sens réel est **claude.ai → GitHub → Claude Code**. Le helper `status` ne compare que repo↔manifeste : il ne « voit » pas claude.ai et peut donc afficher un faux « synchro ».
 
+## ⚠️ Veille YouTube — réflexe outil obligatoire
+
+**Toute demande de scrape / analyse d'une chaîne ou d'une vidéo YouTube se traite avec
+`claude-global/youtube_scraper.py`** (`scrape <url>` → `report <slug>` → routage Notion des 4 destinations),
+**JAMAIS avec WebFetch / RSS / recherche web** — qui ne donnent qu'une liste de titres, sans scoring, sans
+insights, sans routage. Détail du flux : skill `youtube-scraper` (`claude-global/skills/samuel/youtube-scraper/SKILL.md`).
+Si `yt-dlp` manque : `pip install -r claude-global/requirements.txt`.
+
 ## Structure du dépôt
 
 ```

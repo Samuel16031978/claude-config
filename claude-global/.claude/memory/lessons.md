@@ -16,6 +16,11 @@
   priorité d'idée (« approfondir ? ») sont deux décisions : un seul nombre ne peut pas les porter sans se
   contredire (verdict Rodin). → modéliser un objet par décision.
 
+- **Utiliser l'outil du repo, pas un réflexe générique.** Une demande « scrape la chaîne YouTube X » se traite
+  avec `youtube_scraper.py` (scrape→report→Notion), **JAMAIS WebFetch/RSS** (qui ne rend qu'une liste de titres,
+  sans scoring/insights/routage). Erreur réelle : une session Claude Code sur `claude-config` a improvisé via
+  WebFetch faute de directive dans `CLAUDE.md`. → Avant d'improviser, vérifier si le repo a déjà l'outil dédié.
+
 ## Données & robustesse
 
 - **Dériver d'une source fraîche, jamais d'un agrégat mutable.** Une fiche par-chaîne lisait un global
