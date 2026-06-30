@@ -9,6 +9,7 @@
     {"nom": "sante", "poids": "moyen", "keywords": ["santé", "health", "keto", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "microbiote", "vitamine", "cancer", "bien-être", "repos", "régime", "métabolisme"]},
     {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente", "revenus", "revenue", "freelance", "solopreneur", "mrr", "client", "monetisation", "scaling"]},
     {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]},
+    {"nom": "fiscalite-patrimoine", "poids": "moyen", "keywords": ["sci", "holding", "fiscalité", "fiscal", "impôt", "impôts", "patrimoine", "patrimonial", "retraite", "succession", "tva", "urssaf", "comptabilité", "comptable", "juridique", "statut", "statuts", "charges", "dividende", "dividendes", "cotisations", "sarl", "sas", "eurl", "plus-value", "donation", "défiscalisation", "amortissement"]},
     {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]},
     {"nom": "developpement-personnel", "poids": "faible", "keywords": ["confiance", "estime", "peur", "peurs", "croyance", "croyances", "émotion", "émotions", "émotionnel", "coaching", "coach", "dépassement", "relation", "relations", "couple", "amour", "affective", "affectif", "vulnérabilité", "blocage", "blocages", "guérison", "thérapie", "attachement", "ego", "épanouissement"]}
   ],
@@ -32,5 +33,5 @@
     "n8n": ["n8n", "workflow.json", "nodes/"],
     "monday": ["monday.com", "mondaycom", "monday-api"]
   },
-  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "sante", "business", "trading-finance", "developpement-personnel", "mindset", "divers"]
+  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "sante", "business", "trading-finance", "fiscalite-patrimoine", "developpement-personnel", "mindset", "divers"]
 }
