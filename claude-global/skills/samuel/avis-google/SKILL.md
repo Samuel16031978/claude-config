@@ -1,12 +1,18 @@
 ---
 name: avis-google
-description: "Rédaction d'avis Google optimisés pour maximiser les points contributeur (Local Guides) tout en apportant une valeur réelle. Déclencheurs : avis Google, rédiger un avis, Local Guide, maximiser points contributeur, review."
+description: >
+  Expert en rédaction d'avis Google optimisés pour maximiser les points de contribution.
+  DÉCLENCHE ce skill dès que l'utilisateur :
+  - Mentionne "avis Google", "rédiger un avis", "laisser un avis", "note Google"
+  - Parle d'un restaurant, magasin, hôtel, prestataire et veut donner son opinion
+  - Dit "aide-moi à écrire un avis", "comment bien noter", "rédige mon avis"
+  - Mentionne Google Maps dans un contexte de contribution ou d'avis
+  - Veut maximiser ses points de contributeur local Google
 ---
 
 # Skill : Rédaction d'avis Google optimisé
 
 ## Objectif
-
 Produire un avis Google qui maximise les points de contribution **ET** apporte une valeur réelle aux lecteurs.
 
 ---
@@ -14,7 +20,7 @@ Produire un avis Google qui maximise les points de contribution **ET** apporte u
 ## Grille de points Google Maps
 
 | Contribution | Points |
-|--------------|--------|
+|---|---|
 | Avis (texte) | 10 pts |
 | Avis > 200 caractères | +10 pts bonus → **20 pts total** |
 | Note seule (étoiles) | 1 pt |
@@ -26,6 +32,7 @@ Produire un avis Google qui maximise les points de contribution **ET** apporte u
 | Répondre à des questions | 3 pts/réponse |
 | Modification d'une fiche | 5 pts |
 | Ajout d'un lieu | 15 pts |
+| Ajout d'une route | 15 pts |
 | Contrôle d'informations | 1 pt/info vérifiée |
 
 **Score max réaliste par visite** : avis (20) + 3 photos taguées (24) + 1 vidéo (7) = **~51 pts**
@@ -67,39 +74,40 @@ Produire directement :
 
 ---
 
-## Templates par type d'établissement
+## Template par type d'établissement
 
 ### Restaurant
 ```
-[Contexte visite]. [Spécialité / plat commandé] : [description concrète].
-[Point sur l'accueil/ambiance]. [Nuance si pertinente].
+[Contexte visite]. [Spécialité / plat commandé] : [description concrète]. 
+[Point sur l'accueil/ambiance]. [Nuance si pertinente]. 
 Idéal pour [profil/occasion]. [Note implicite ou conseil].
 ```
 
 ### Commerce / Magasin
 ```
-[Raison de la visite]. [Produit/service trouvé] : [qualité, prix, dispo].
-[Accueil / expertise du personnel]. [Facilité d'accès / praticité].
+[Raison de la visite]. [Produit/service trouvé] : [qualité, prix, dispo]. 
+[Accueil / expertise du personnel]. [Facilité d'accès / praticité]. 
 [Recommandation ciblée].
 ```
 
-### Prestataire / Artisan
+### Prestataire / Artisan (ex : massage, rénovation, coiffeur)
 ```
-[Prestation demandée + contexte]. [Résultat concret].
-[Professionnalisme, ponctualité, communication]. [Rapport qualité/prix].
+[Prestation demandée + contexte]. [Résultat concret]. 
+[Professionnalisme, ponctualité, communication]. [Rapport qualité/prix]. 
 [À qui je recommande].
 ```
 
 ### Hôtel / Hébergement
 ```
-[Durée + type de séjour]. [Points forts chambre/équipements].
-[Service notable]. [Localisation / praticité].
+[Durée + type de séjour]. [Points forts chambre/équipements]. 
+[Service notable]. [Localisation / praticité]. 
 [Nuance éventuelle]. [Recommandation avec contexte].
 ```
 
 ---
 
 ## Checklist avant livraison
+
 - [ ] ≥ 220 caractères (compter)
 - [ ] Expérience personnelle visible (pas générique)
 - [ ] Au moins 1 détail concret (plat, produit, nom du service, moment)
@@ -113,6 +121,7 @@ Idéal pour [profil/occasion]. [Note implicite ou conseil].
 **Input utilisateur** : "Restaurant thaï à Baillargues, très bien, bon pad thaï, service sympa, un peu bruyant"
 
 **Output :**
+
 > Déjeuner au calme (enfin presque — l'endroit est vivant aux heures de pointe). Le pad thaï est généreux et bien équilibré, avec des saveurs authentiques sans être édulcoré pour le goût occidental. Service souriant et rapide malgré l'affluence. Excellent rapport qualité/prix pour la région. À tester en semaine pour plus de tranquillité.
 
 *(237 caractères → 20 pts assurés)*
