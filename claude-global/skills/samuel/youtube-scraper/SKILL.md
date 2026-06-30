@@ -164,10 +164,16 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
    `Type` = destination (cultiver/process/meta-erreur/meta-bonne-pratique) · `Chaîne` · `Vidéo` · `Pertinence` · `Date`.
 3. Filtrer par `Thème` dans Notion pour réviser un domaine (KPI PRD : retrouver un insight en <30 s).
 
-### C. Rendre à Samuel le récap : idées ajoutées · insights routés par thème · idées ignorées (déjà présentes).
+### C. Outils-à-installer (repos Claude) → base 🔧 Outils à installer/surveiller
+1. Clé `repos` du report → garder `verdict_outil.palier ∈ {✅ installer, 👁 surveiller}` (gate `.claude/` déjà appliqué).
+2. **Dédup par URL** : SQL sur `outils_data_source_id`, `WHERE "userDefined:URL" LIKE '%<repo>%'` → skip si présent.
+3. Sinon `notion-create-pages` (parent `outils_data_source_id`) : `Repo` · `Palier` · `Score` · `Stars` ·
+   `Domaines` · `Chaîne source` · `userDefined:URL` · `Date`.
 
-> Idempotent par URL côté Boîte à Idées. Destinations restantes (sous-étapes) : log Veille GitHub (outils-à-installer),
-> Chaînes-à-explorer (`chaines_liees`), et la boucle méta Phase 3 (insights `Type = meta-*`).
+### D. Rendre à Samuel le récap : idées ajoutées · insights par thème · outils à installer/surveiller · ignorés (déjà présents).
+
+> Idempotent par URL (Boîte à Idées + Outils). Destinations restantes : 📡 Chaînes-à-explorer (`chaines_liees`) et
+> la boucle méta Phase 3 (insights `Type = meta-*`).
 
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 
