@@ -42,6 +42,11 @@
   commits mergés restent ; repartir d'une branche propre depuis `main` pour le travail suivant.
 - **Écritures sortantes (Notion, GitHub) : confirmer la politique avant la première écriture** dans une base
   active de Samuel ; ensuite suivre la règle convenue (ex. auto-route 🔥/⚡ en « À évaluer »).
+  → **Politique veille YouTube → Notion : AUTORISÉE de façon durable (2026-06-30).** Le scrape route
+  automatiquement les 4 destinations **sans demander confirmation** (objectif : routines nocturnes sans
+  Samuel). Filet de sécurité = **idempotence par URL** (dédup avant chaque création → re-router n'écrit
+  jamais de doublon). Périmètre limité à la veille→Notion ; le `push_event` intervals.icu garde sa
+  confirmation explicite (calendrier d'entraînement, autre domaine).
 
 ## Veille externe → mes règles (promotion CONTRÔLÉE)
 
