@@ -8,7 +8,8 @@
     {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "entrainement", "fitness", "garmin", "intervals", "keto", "health", "santé", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "récupération", "recovery", "microbiote", "vitamine", "natation", "swim"]},
     {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente", "revenus", "revenue", "freelance", "solopreneur", "mrr", "client", "monetisation", "scaling"]},
     {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]},
-    {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]}
+    {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]},
+    {"nom": "developpement-personnel", "poids": "faible", "keywords": ["confiance", "estime", "peur", "peurs", "croyance", "croyances", "émotion", "émotions", "émotionnel", "coaching", "coach", "dépassement", "relation", "relations", "couple", "amour", "affective", "affectif", "vulnérabilité", "blocage", "blocages", "guérison", "thérapie", "attachement", "ego", "épanouissement"]}
   ],
   "projets_actifs": [
     {"nom": "WhatsApp→N8N", "keywords": ["whatsapp", "n8n", "automation", "automatisation", "webhook", "workflow"], "poids": "fort"},
@@ -30,5 +31,5 @@
     "n8n": ["n8n", "workflow.json", "nodes/"],
     "monday": ["monday.com", "mondaycom", "monday-api"]
   },
-  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "business", "trading-finance", "divers"]
+  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "business", "trading-finance", "developpement-personnel", "mindset", "divers"]
 }
