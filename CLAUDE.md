@@ -4,9 +4,11 @@
 
 ## Leçons apprises
 
-> Mémoire d'agent structurée (erreur → règle, codes de bonne conduite) :
-> [`claude-global/.claude/memory/lessons.md`](claude-global/.claude/memory/lessons.md) — à relire avant d'agir.
+> **Mémoire d'agent auto-chargée** (erreur → règle, codes de bonne conduite). L'`@import` ci-dessous l'injecte
+> dans le contexte à chaque session → relue avant d'agir, sans toucher au dispatcher de hooks.
 > Les entrées datées ci-dessous restent l'historique chronologique.
+
+@claude-global/.claude/memory/lessons.md
 
 - 2026-06-26 connecteurs/intégrations : toujours vérifier (recherche web) qu'un connecteur existe réellement avant de l'inscrire dans une architecture — ne pas supposer. Ex : Gemini n'a aucun connecteur Notion grand public (relais copier-coller manuel), DeepSeek passe par Notion AI.
 - 2026-06-27 sécurité : le skill `skill-sync-notion` (édité dans claude.ai) contenait un **token OAuth Anthropic et un token Notion en clair**. Rédigés avant tout commit, remplacés par des variables d'env. **Règle : jamais de token en dur dans un SKILL.md ; scanner avant chaque commit.** Tokens exposés → à révoquer/régénérer.
