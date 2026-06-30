@@ -22,9 +22,10 @@ Toutes les opérations passent par `youtube_scraper.py` (lancé depuis `claude-g
 
 ## ⚠️ Avant toute évaluation de pertinence
 
-**Lis `claude-global/.claude/memory/scoring-profile.md`** — il décrit la grille des 4 axes, les ancres de
-verdict, le plafond 65 et la règle de confiance AXE 4. Les listes vivantes (projets actifs, outils manquants,
-thèmes surveillés) sont dans `data/youtube-scrapes/projets-samuel.json` (source unique, éditable).
+**Lis `claude-global/.claude/memory/scoring-profile.md`** — il décrit le **moteur /100 (3 axes)**, les **2
+verdicts** (Outil-à-installer / Idée-à-approfondir), les **4 destinations** et la règle de confiance. Les listes
+vivantes (domaines de veille, projets actifs, outils manquants) sont dans
+`data/youtube-scrapes/projets-samuel.json` (source unique, éditable).
 
 ## Configuration
 
@@ -71,7 +72,7 @@ python3 youtube_scraper.py status
 
 ### 3. Repos notés, filtrables
 ```bash
-python3 youtube_scraper.py repos [--min-score 60] [--axe claude|qualite|theme|perso]
+python3 youtube_scraper.py repos [--min-score 60] [--axe qualite|pertinence|integrabilite]
 ```
 Triés par score /100 (ou par axe si `--axe`).
 
@@ -136,17 +137,24 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 `nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
 `top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
-## Grille de scoring /100 (résumé — détail dans scoring-profile.md)
+## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
+
+**Moteur /100** (sobre, video-agnostique) :
 
 | Axe | Points | Mesure |
 |---|---|---|
-| AXE 1 — Contenu Claude (bonus) | 10 | `.claude/`, skills, agents, commands/hooks |
-| AXE 2 — Qualité | 40 | stars, activité récente, README |
-| AXE 3 — Thématique | 30 | thèmes surveillés (`projets-samuel.json`) |
-| AXE 4 — Personnel | 20 | projet actif / outil manquant (avec confiance) |
+| Qualité | 40 | stars, activité récente, README |
+| Pertinence Samuel | 45 | domaines (FR+EN, frontières de mots) + projets/outils (confiance) |
+| Intégrabilité | 15 | branchable stack : Claude / MCP / n8n / Monday |
 
-**Verdict :** 🔥 ≥95 · ✅ 85-94 · 🟡 70-84 (veille) · ⚪ <70. Grille **décentrée Claude** : un repo non-Claude
-atteint 90 (Qualité+Thème+Perso) ; le contenu Claude n'est qu'un bonus vers la pépite (95+).
+**2 verdicts dérivés** :
+- 🔧 **Outil-à-installer** (règles éprouvées) : gate `.claude/`, plafond étoiles (<100★→70, <500★→79),
+  seuils `≥80 installer · 60-79 surveiller · <60 ignorer`.
+- 💡 **Idée-à-approfondir** (décentré, calculé au `report`) : curation vidéo + nouveauté + thème →
+  potentiel 🔥/⚡/💡 → alimente la Boîte à Idées.
+
+Un repo modeste mais **sujet central d'une vidéo on-theme** = **idée 🔥** sans gonfler la note repo (découplage
+qui évite le biais clickbait). Chaque insight porte un `destination` (cultiver/process/meta-erreur/meta-bonne-pratique).
 
 ## Règles d'utilisation
 

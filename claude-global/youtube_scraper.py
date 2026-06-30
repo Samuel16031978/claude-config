@@ -86,6 +86,14 @@ SIGNAL_PHRASES = ["la cle c'est", "la clé c'est", "le secret", "il faut", "j'ai
 ORAL_REPLACEMENTS = [(" dot ", "."), (" point ", "."), (" slash ", "/"), (" barre ", "/"),
                      (" tiret ", "-"), (" dash ", "-"), (" underscore ", "_"), (" souligne ", "_")]
 
+# Destinations d'un insight (volant d'inertie : me cultiver / process / méta auto-amélioration)
+META_ERROR_CUES = ["erreur", "piège", "piege", "évite", "evite", "éviter", "ne fais pas",
+                   "problème", "probleme", "fail", "mistake", "bug", "attention", "danger"]
+META_BP_CUES = ["bonne pratique", "best practice", "convention", "toujours", "il faut",
+                "la règle", "la regle", "discipline", "méthode", "methode", "structure"]
+PROCESS_CUES = ["workflow", "process", "automatis", "pipeline", "étape", "etape", "n8n",
+                "orchestr", "déléguer", "deleguer", "routine"]
+
 
 # ── IO helpers ────────────────────────────────────────────────────────────────
 
@@ -192,6 +200,18 @@ def _dominant_topic(words):
     return best if scores[best] > 0 else None
 
 
+def tag_destination(text):
+    # Oriente chaque insight vers une destination du volant d'inertie de connaissance.
+    low = text.lower()
+    if any(c in low for c in META_ERROR_CUES):
+        return "meta-erreur"
+    if any(c in low for c in META_BP_CUES):
+        return "meta-bonne-pratique"
+    if any(c in low for c in PROCESS_CUES):
+        return "process"
+    return "cultiver"
+
+
 def extract_insights(transcript, top_n=8):
     if not transcript:
         return []
@@ -208,7 +228,8 @@ def extract_insights(transcript, top_n=8):
         if relevance >= 6:
             topic = _dominant_topic(low)
             if topic in ("ia", "entrepreneuriat", "mindset"):
-                candidates.append({"texte": text, "topic": topic, "relevance": relevance})
+                candidates.append({"texte": text, "topic": topic, "relevance": relevance,
+                                   "destination": tag_destination(text)})
     candidates.sort(key=lambda c: c["relevance"], reverse=True)
     seen, unique = set(), []
     for c in candidates:
@@ -297,27 +318,40 @@ def _handle_rate_limit(headers):
 
 # ── Scoring repo /100 ───────────────────────────────────────────────────────────
 
-def _score_axe1_claude(tree, truncated):
-    paths = [t.get("path", "") for t in tree]
-    has_claude = any(".claude/" in p or p == ".claude" for p in paths)
-    nb_skills = sum(1 for p in paths if p.endswith("SKILL.md"))
-    has_agents = any("agents/" in p for p in paths) or any(p.endswith(".agent.md") for p in paths)
-    has_commands = any("commands/" in p for p in paths)
-    has_hooks = any("hooks/" in p for p in paths)
+def _score_integrabilite(repo, tree, truncated, integrations):
+    # AXE Intégrabilité = max 15 : le repo est-il branchable dans la stack de Samuel
+    # (Claude / MCP / n8n / Monday) ? Généralise l'ex-axe Claude à tous ses outils.
+    paths = [t.get("path", "").lower() for t in tree]
+    haystack = " ".join(paths + [
+        (repo.get("full_name") or "").lower(),
+        (repo.get("description") or "").lower(),
+        " ".join(repo.get("topics") or []).lower(),
+    ])
+
+    def _has(tokens):
+        return any(tok.lower() in haystack for tok in tokens)
+
+    has_claude = _has(integrations.get("claude", [".claude/", ".claude-plugin/"]))
+    nb_skills = sum(1 for p in paths if p.endswith("skill.md"))
+    has_agents = any("agents/" in p for p in paths)
     if truncated and not (has_claude or nb_skills):
-        return None, {"axe1": "unknown (arbre tronqué)"}
-    # AXE 1 = bonus (max 10) : le contenu Claude affine la veille sans la dominer.
-    skills_pts = 3 if nb_skills >= 4 else 2 if nb_skills >= 2 else 1 if nb_skills == 1 else 0
-    agents_pts = 2 if has_agents else 0
-    ch_pts = 2 if (has_commands and has_hooks) else 1 if (has_commands or has_hooks) else 0
-    total = (3 if has_claude else 0) + skills_pts + agents_pts + ch_pts
-    details = {"a_dossier_claude": has_claude, "nb_skills": nb_skills,
-               "agents": has_agents, "commands": has_commands, "hooks": has_hooks}
-    return total, details
+        return None, {"a_dossier_claude": False, "integration": "unknown (arbre tronqué)"}
+
+    claude_pts = min(6, (3 if has_claude else 0)
+                     + (2 if nb_skills >= 2 else 1 if nb_skills == 1 else 0)
+                     + (1 if has_agents else 0))
+    mcp_pts = 4 if _has(integrations.get("mcp", ["mcp"])) else 0
+    n8n_pts = 3 if _has(integrations.get("n8n", ["n8n"])) else 0
+    monday_pts = 2 if _has(integrations.get("monday", ["monday.com"])) else 0
+    total = min(15, claude_pts + mcp_pts + n8n_pts + monday_pts)
+    kinds = [k for k, p in (("claude", claude_pts), ("mcp", mcp_pts),
+                            ("n8n", n8n_pts), ("monday", monday_pts)) if p]
+    return total, {"a_dossier_claude": has_claude, "nb_skills": nb_skills,
+                   "integrations": kinds}
 
 
-def _score_axe2_qualite(repo, tree):
-    # AXE 2 = max 40 (moteur principal de la veille).
+def _score_qualite(repo, tree):
+    # AXE Qualité = max 40 (moteur universel de la veille).
     stars = repo.get("stargazers_count", 0)
     star_pts = 16 if stars > 1000 else 13 if stars >= 500 else 10 if stars >= 100 \
         else 6 if stars >= 20 else 3
@@ -337,36 +371,43 @@ def _recency_points(pushed_at):
     return 15 if days < 31 else 11 if days < 92 else 7 if days < 183 else 3 if days < 366 else 0
 
 
-def _score_axe3_theme(repo, tree, themes):
-    # AXE 3 = max 30 (6 pts par thème surveillé matché).
-    haystack = " ".join([
-        repo.get("description") or "", " ".join(repo.get("topics") or []),
-        " ".join(t.get("path", "") for t in tree[:50]),
-    ]).lower()
-    matched = [th for th in themes if th in haystack]
-    return min(30, len(matched) * 6), matched
+_POIDS_PTS = {"fort": 10, "moyen": 7, "faible": 4}
 
 
-def _score_axe4_perso(repo, tree, projets):
+def _kw_hits(keywords, haystack):
+    # Match à frontières de mots (FR+EN) : évite "ia" ∈ "media" et capte les repos anglophones.
+    return [k for k in keywords if re.search(rf"\b{re.escape(k.lower())}\b", haystack)]
+
+
+def _score_pertinence(repo, tree, projets):
+    # AXE Pertinence Samuel = max 45 : domaines de veille (≤25) + projets/outils perso (≤20).
     haystack = " ".join([
         repo.get("description") or "", " ".join(repo.get("topics") or []),
-        repo.get("full_name") or "", " ".join(t.get("path", "") for t in tree[:50]),
+        repo.get("full_name") or "", " ".join(t.get("path", "") for t in tree[:80]),
     ]).lower()
+
+    dom_pts, domaines = 0, []
+    for dom in projets.get("domaines_veille", []):
+        if _kw_hits(dom["keywords"], haystack):
+            dom_pts += _POIDS_PTS.get(dom.get("poids", "moyen"), 7)
+            domaines.append(dom["nom"])
+    dom_pts = min(25, dom_pts)
+
     proj_pts, matched = 0, []
     for proj in projets.get("projets_actifs", []):
-        hits = [k for k in proj["keywords"] if k.lower() in haystack]
+        hits = _kw_hits(proj["keywords"], haystack)
         if hits:
             proj_pts = max(proj_pts, 12 if len(hits) >= 2 else 6)
             matched.extend(hits)
     tool_pts = 0
     for outil in projets.get("outils_manquants", []):
-        hits = [k for k in outil["keywords"] if k.lower() in haystack]
+        hits = _kw_hits(outil["keywords"], haystack)
         if hits:
             tool_pts = max(tool_pts, 8 if len(hits) >= 2 else 4)
             matched.extend(hits)
-    total = proj_pts + tool_pts
+    perso_pts = min(20, proj_pts + tool_pts)
     confiance = "haute" if (len(set(matched)) >= 2 or proj_pts >= 12) else "basse"
-    return total, confiance, sorted(set(matched))
+    return dom_pts, perso_pts, confiance, sorted(set(matched)), domaines
 
 
 def _verdict(score):
@@ -377,6 +418,20 @@ def _verdict(score):
     if score >= 70:
         return "🟡 Intéressant — garder en veille"
     return "⚪ Marginal — ignorer sauf besoin précis"
+
+
+def _verdict_outil(total, stars, has_claude):
+    # Verdict « outil-à-installer » : règles éprouvées de la veille GitHub de Samuel —
+    # gate .claude/ (sinon n/a), plafond par étoiles, seuils 80 (installer) / 60 (surveiller).
+    if not has_claude:
+        return {"palier": "n/a", "score": None, "raison": "pas de contenu Claude installable"}
+    capped = total
+    if stars < 100:
+        capped = min(capped, 70)
+    elif stars < 500:
+        capped = min(capped, 79)
+    palier = "✅ installer" if capped >= 80 else "👁 surveiller" if capped >= 60 else "⚪ ignorer"
+    return {"palier": palier, "score": capped, "raison": f"{stars}★"}
 
 
 def score_repo(canon_url, projets, etag=None):
@@ -393,31 +448,33 @@ def score_repo(canon_url, projets, etag=None):
     tree = (tree_data or {}).get("tree", []) if t_status == 200 else []
     truncated = (tree_data or {}).get("truncated", False) if t_status == 200 else True
 
-    axe1, d1 = _score_axe1_claude(tree, truncated)
-    axe2, d2 = _score_axe2_qualite(repo, tree)
-    axe3, themes = _score_axe3_theme(repo, tree, projets.get("themes_surveilles", []))
-    axe4, conf4, matched4 = _score_axe4_perso(repo, tree, projets)
+    integ, d_integ = _score_integrabilite(repo, tree, truncated, projets.get("integrations_stack", {}))
+    qual, d_qual = _score_qualite(repo, tree)
+    dom_pts, perso_pts, conf, matched, domaines = _score_pertinence(repo, tree, projets)
 
-    axe1_val = axe1 if axe1 is not None else 0
-    verdict_total = axe1_val + axe2 + axe3 + (axe4 if conf4 == "haute" else 0)
+    integ_val = integ if integ is not None else 0
+    pertinence = dom_pts + (perso_pts if conf == "haute" else 0)
+    total = qual + pertinence + integ_val
     flags = []
-    if conf4 == "basse" and axe4 > 0:
-        flags.append("⚠️ AXE4 à valider")
-    if axe1 is None:
-        flags.append("⚠️ AXE1 inconnu (arbre tronqué)")
+    if conf == "basse" and perso_pts > 0:
+        flags.append("⚠️ Pertinence perso à valider")
+    if integ is None:
+        flags.append("⚠️ Intégrabilité inconnue (arbre tronqué)")
 
+    stars = repo.get("stargazers_count", 0)
     return {
         "status": "scored",
         "url": canon_url, "owner": owner, "repo": repo_name,
-        "stars": repo.get("stargazers_count", 0), "pushed_at": (repo.get("pushed_at") or "")[:10],
+        "stars": stars, "pushed_at": (repo.get("pushed_at") or "")[:10],
         "scores": {
-            "axe1_contenu_claude": axe1, "axe2_qualite": axe2,
-            "axe3_thematique": axe3, "axe4_personnel": axe4,
-            "total_100": verdict_total,
+            "qualite": qual, "pertinence_samuel": pertinence,
+            "integrabilite": integ_val, "total_100": total,
         },
-        "verdict": _verdict(verdict_total),
-        "axe4_confidence": conf4, "matched_keywords": matched4, "flags": flags,
-        "details": {**d1, **d2, "themes": themes},
+        "verdict": _verdict(total),
+        "verdict_outil": _verdict_outil(total, stars, d_integ.get("a_dossier_claude")),
+        "pertinence_confidence": conf, "matched_keywords": matched, "flags": flags,
+        "details": {**d_integ, **d_qual, "domaines": domaines,
+                    "pertinence_domaines": dom_pts, "pertinence_perso": perso_pts},
         "etag": new_etag,
         "scraped_at": _now().isoformat(),
     }
@@ -606,6 +663,7 @@ def cmd_scrape(args):
         raise SystemExit("❌ URL YouTube invalide (attendu youtube.com/@... ou /channel/...)")
     run_ts = _now().isoformat()
     projets = _load_projets()
+    themes_surveilles = [d["nom"] for d in projets.get("domaines_veille", [])]
     manifest = _read_json(MANIFEST_FILE, {"videos_seen": {}, "repos_seen": {}})
     repos_scored = _read_json(REPOS_FILE, {})
     tools_index = _read_json(TOOLS_FILE, {})
@@ -692,7 +750,7 @@ def cmd_scrape(args):
             "github_repos": [link["url"] for link in links],
             "topics": score_topics(text),
             "insights": extract_insights(text),
-            "tools": extract_tools(text, projets.get("themes_surveilles", [])),
+            "tools": extract_tools(text, themes_surveilles),
             "description_preview": desc[:200],
         })
         kept[fmt] += 1
@@ -771,6 +829,8 @@ def _score_repos(repo_urls, repos_scored, manifest, projets, refresh):
         if result["status"] == "unchanged" and cached:
             cached["scraped_at"] = _now().isoformat()
         elif result["status"] == "scored":
+            prev = repos_scored.get(canon)
+            result["first_seen"] = (prev or {}).get("first_seen") or result["scraped_at"]
             repos_scored[canon] = result
         elif result["status"] == "not_found":
             continue
@@ -822,8 +882,8 @@ def cmd_status(_):
 
 def cmd_repos(args):
     repos = _read_json(REPOS_FILE, {})
-    axe_key = {"claude": "axe1_contenu_claude", "qualite": "axe2_qualite",
-               "theme": "axe3_thematique", "perso": "axe4_personnel"}.get(args.axe)
+    axe_key = {"qualite": "qualite", "pertinence": "pertinence_samuel",
+               "integrabilite": "integrabilite"}.get(args.axe)
     out = []
     for r in repos.values():
         if not r.get("scores"):
@@ -905,6 +965,40 @@ def _fmt_date(yyyymmdd):
     return f"{yyyymmdd[6:8]}/{yyyymmdd[4:6]}/{yyyymmdd[0:4]}"
 
 
+# Topics vidéo (TOPIC_KEYWORDS) → thèmes d'apprentissage de Samuel (Boîte à Idées).
+TOPIC_TO_THEME = {"ia": "ia", "entrepreneuriat": "business", "mindset": "divers", "dev": "dev"}
+
+
+def _verdict_idee(repo_result, citing_videos, scan_iso):
+    # Verdict « idée-à-approfondir » : pilote la Boîte à Idées. DÉCENTRÉ — pas de gate .claude/
+    # ni de plafond étoiles : la curation d'un vidéaste (sujet central) prime.
+    if not citing_videos:
+        return None
+    curation, best_topic = 0, None
+    for v in citing_videos:
+        topics = v.get("topics") or {}
+        dom_topic = max(topics, key=topics.get) if topics else None
+        strength = topics.get(dom_topic, 0) if dom_topic else 0
+        sole = len(v.get("github_repos", [])) == 1   # repo seul cité = sujet central probable
+        c = (45 if sole else 18) * min(1.0, strength / 4.0)
+        if c >= curation:
+            curation, best_topic = c, dom_topic
+    nouveaute = 12
+    first_seen = repo_result.get("first_seen") if repo_result else None
+    if first_seen and scan_iso:
+        try:
+            days = (datetime.fromisoformat(scan_iso) - datetime.fromisoformat(first_seen)).days
+            nouveaute = 30 if days < 1 else 20 if days < 14 else 10 if days < 60 else 5
+        except ValueError:
+            pass
+    theme = TOPIC_TO_THEME.get(best_topic, "divers")
+    theme_pts = 25 if best_topic in TOPIC_TO_THEME else 10
+    score = round(min(100, curation + nouveaute + theme_pts))
+    potentiel = "🔥" if score >= 75 else "⚡" if score >= 50 else "💡"
+    return {"score": score, "potentiel": potentiel, "theme": theme,
+            "raison": f"curation {round(curation)} · nouveauté {nouveaute} · thème {theme}"}
+
+
 def _build_report(slug, doc, repos_scored, tools_seen):
     videos = doc.get("videos", [])
     vid_ids = {v["id"] for v in videos}
@@ -915,21 +1009,26 @@ def _build_report(slug, doc, repos_scored, tools_seen):
         for u in v.get("github_repos", []):
             if u not in repo_urls:
                 repo_urls.append(u)
+    scan_iso = doc.get("scraped_at")
     repos = []
     for u in repo_urls:
         r = repos_scored.get(u)
-        found_in = [v["title"] for v in videos if u in v.get("github_repos", [])]
+        citing = [v for v in videos if u in v.get("github_repos", [])]
+        found_in = [v["title"] for v in citing]
+        idee = _verdict_idee(r, citing, scan_iso)
         if r and r.get("scores"):
             s = r["scores"]
             repos.append({
                 "url": u, "score": s["total_100"], "verdict": r["verdict"],
-                "axes": f'{s["axe1_contenu_claude"]}/{s["axe2_qualite"]}/'
-                        f'{s["axe3_thematique"]}/{s["axe4_personnel"]}',
+                "axes": f'{s.get("qualite", "?")}/{s.get("pertinence_samuel", "?")}/'
+                        f'{s.get("integrabilite", "?")}',
+                "verdict_outil": r.get("verdict_outil"), "verdict_idee": idee,
                 "flags": r.get("flags", []), "found_in": found_in,
             })
         else:
-            repos.append({"url": u, "score": None, "verdict": "— non noté",
-                          "axes": "—", "flags": [], "found_in": found_in})
+            repos.append({"url": u, "score": None, "verdict": "— non noté", "axes": "—",
+                          "verdict_outil": None, "verdict_idee": idee,
+                          "flags": [], "found_in": found_in})
     repos.sort(key=lambda x: x["score"] if x["score"] is not None else -1, reverse=True)
 
     theme_sum = {}
@@ -956,6 +1055,13 @@ def _build_report(slug, doc, repos_scored, tools_seen):
     periode = f"{_fmt_date(dates[-1])} → {_fmt_date(dates[0])}" if dates else "?"
     top = repos[0] if repos and repos[0]["score"] is not None else None
 
+    idees = sorted(({"url": r["url"], **r["verdict_idee"]} for r in repos if r.get("verdict_idee")),
+                   key=lambda x: x["score"], reverse=True)
+    dest_tally = {}
+    for it in insights:
+        d = it.get("destination", "cultiver")
+        dest_tally[d] = dest_tally.get(d, 0) + 1
+
     return {
         "chaine": doc.get("channel"), "url": doc.get("url"), "slug": slug,
         "date_scan": (doc.get("scraped_at") or "")[:10], "periode": periode,
@@ -967,6 +1073,7 @@ def _build_report(slug, doc, repos_scored, tools_seen):
         "themes": themes, "top_outils": [o["nom"] for o in outils[:8]],
         "nb_insights": len(insights),
         "repos": repos, "insights": insights[:10], "outils": outils[:12],
+        "idees": idees[:10], "destinations": dest_tally,
         "non_publiques": doc.get("non_publiques", []),
     }
 
@@ -975,23 +1082,43 @@ def _fiche_markdown(rep):
     L = [f"**{rep['chaine']}** · {rep['periode']} · {rep['nb_videos']} vidéos / "
          f"{rep['nb_shorts']} shorts · scan {rep['date_scan']}", ""]
 
-    L.append("## 🏆 Repos GitHub notés /100")
+    L.append("## 🏆 Repos notés — 2 verdicts (Outil / Idée)")
     if rep["repos"]:
-        L += ["| Repo | Score | Verdict | Axes C/Q/T/P | Cité dans |",
-              "|---|---|---|---|---|"]
+        L += ["| Repo | /100 | Q/P/I | 🔧 Outil | 💡 Idée | Cité dans |",
+              "|---|---|---|---|---|---|"]
         for r in rep["repos"]:
-            score = f"{r['score']}/100" if r["score"] is not None else "—"
+            score = f"{r['score']}" if r["score"] is not None else "—"
             axes = r["axes"] + (" ⚠️" if r.get("flags") else "")
+            vo = r.get("verdict_outil") or {}
+            outil = vo.get("palier", "—") if r["score"] is not None else "—"
+            vi = r.get("verdict_idee") or {}
+            idee = f"{vi.get('potentiel', '')} {vi.get('score', '')}".strip() or "—"
             cite = "; ".join(r["found_in"][:2])
-            L.append(f"| {r['url']} | {score} | {r['verdict']} | {axes} | {cite} |")
+            L.append(f"| {r['url']} | {score} | {axes} | {outil} | {idee} | {cite} |")
     else:
         L.append("_Aucun repo GitHub cité dans les vidéos analysées._")
     L.append("")
 
-    L.append("## 💡 Insights clés")
+    L.append("## 💡 Idées à approfondir (→ Boîte à Idées)")
+    idees = sorted((r for r in rep["repos"] if r.get("verdict_idee")),
+                   key=lambda r: r["verdict_idee"]["score"], reverse=True)
+    if idees:
+        for r in idees[:8]:
+            vi = r["verdict_idee"]
+            cite = "; ".join(r["found_in"][:1])
+            L.append(f"- {vi['potentiel']} **{vi['score']}/100** · `{vi['theme']}` · {r['url']} — _{cite}_")
+    else:
+        L.append("_Aucune idée déclenchée._")
+    L.append("")
+
+    L.append("## 📚 Insights clés (taggés par destination)")
     if rep["insights"]:
+        if rep.get("destinations"):
+            tally = " · ".join(f"{k}: {v}" for k, v in sorted(rep["destinations"].items()))
+            L.append(f"_Répartition : {tally}_")
         for it in rep["insights"]:
-            L.append(f"- **[{it['topic']} {it['relevance']}]** {it['texte']} — _{it['video']}_")
+            dest = it.get("destination", "cultiver")
+            L.append(f"- **[{it['topic']} {it['relevance']} · {dest}]** {it['texte']} — _{it['video']}_")
     else:
         L.append("_Aucun insight au-dessus du seuil._")
     L.append("")
@@ -1063,7 +1190,7 @@ def main():
 
     p_repos = sub.add_parser("repos")
     p_repos.add_argument("--min-score", type=int, default=0, dest="min_score")
-    p_repos.add_argument("--axe", choices=["claude", "qualite", "theme", "perso"])
+    p_repos.add_argument("--axe", choices=["qualite", "pertinence", "integrabilite"])
 
     p_topics = sub.add_parser("topics")
     p_topics.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "dev"])
