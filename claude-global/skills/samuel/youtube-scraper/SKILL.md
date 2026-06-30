@@ -178,8 +178,14 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
 
 ### E. Rendre à Samuel le récap : idées · insights par thème · outils · chaînes à explorer · ignorés (déjà présents).
 
-> **Routage Phase 2 complet** (4 destinations, idempotentes par URL). Reste la boucle méta Phase 3
-> (exploiter les insights `Type = meta-*` → mémoire de l'agent).
+> **Routage Phase 2 complet** (4 destinations, idempotentes par URL).
+
+### F. Phase 3 — candidats-leçons d'agent (promotion CONTRÔLÉE vers `lessons.md`)
+Les insights `Type ∈ {meta-erreur, meta-bonne-pratique, process}` **ET** `Thème ∈ {ia, dev, automatisation}`
+sont des **candidats-leçons d'agent** (technique, gestion d'erreurs, conduite). → les proposer pour
+`claude-global/.claude/memory/lessons.md` **après filtrage sceptique** (jamais en auto : un avis clickbait ne
+doit pas devenir une règle). Un meta-* **hors-tech** (ex. fiscal) reste dans Apprentissage, pas dans `lessons.md`.
+Capture via le skill `save-lesson`. Détail + garde-fou : section « Veille externe → mes règles » de `lessons.md`.
 
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 

@@ -38,6 +38,19 @@
 - **Écritures sortantes (Notion, GitHub) : confirmer la politique avant la première écriture** dans une base
   active de Samuel ; ensuite suivre la règle convenue (ex. auto-route 🔥/⚡ en « À évaluer »).
 
+## Veille externe → mes règles (promotion CONTRÔLÉE)
+
+Le scraper YouTube peut m'alimenter : les insights `Type ∈ {meta-erreur, meta-bonne-pratique, process}` **ET**
+`Thème ∈ {ia, dev, automatisation}` sont des **candidats-leçons d'agent** (technique, gestion d'erreurs,
+conduite). MAIS `lessons.md` gouverne mon comportement → **ne JAMAIS ingérer automatiquement** : un avis
+YouTube clickbait ne doit pas devenir ma règle. Filtrer avec **scepticisme** (cf. Rodin) ; ne promouvoir que
+ce qui est solide et transposable. Un meta-* **hors-tech** (ex. erreurs fiscales SCI) reste un savoir-métier
+(base Notion *Apprentissage*), PAS une règle d'agent.
+
+Leçons adoptées depuis la veille :
+- **Profondeur > nouveauté** : ne pas adopter un outil/une techno par hype ; approfondir ce qu'on maîtrise
+  avant de switcher (source : @ia_irl, validé). Corollaire : rester sceptique face au battage médiatique.
+
 ## Codes de bonne conduite
 
 Voir les règles globales (synchronisées dans `~/.claude/rules/`) : `coding.md` (limites fichier/fonction,
