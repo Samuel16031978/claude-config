@@ -1,0 +1,35 @@
+{
+  "_doc": "Source unique des listes de scoring. Moteur repo /100 = Qualité + Pertinence (domaines_veille + projets_actifs + outils_manquants) + Intégrabilité (integrations_stack). Édite ce fichier ; scoring-profile.md le référence sans recopier les listes.",
+  "domaines_veille": [
+    {"nom": "ia", "poids": "fort", "keywords": ["ia", "ai", "llm", "agent", "agentic", "skill", "mcp", "prompt", "rag", "claude", "gpt", "anthropic", "openai", "orchestration", "intelligence artificielle"]},
+    {"nom": "automatisation", "poids": "fort", "keywords": ["n8n", "make", "zapier", "workflow", "webhook", "automation", "automatisation", "monday", "airtable", "notion", "planning", "crm"]},
+    {"nom": "dev", "poids": "moyen", "keywords": ["dev", "code", "framework", "api", "typescript", "javascript", "python", "react", "devops", "sdk", "cli", "git"]},
+    {"nom": "btp", "poids": "moyen", "keywords": ["btp", "construction", "renovation", "rénovation", "chantier", "devis", "obat", "batiment", "bâtiment"]},
+    {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "entrainement", "fitness", "garmin", "intervals", "keto", "health", "santé", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "récupération", "recovery", "microbiote", "vitamine", "natation", "swim"]},
+    {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente", "revenus", "revenue", "freelance", "solopreneur", "mrr", "client", "monetisation", "scaling"]},
+    {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]},
+    {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]},
+    {"nom": "developpement-personnel", "poids": "faible", "keywords": ["confiance", "estime", "peur", "peurs", "croyance", "croyances", "émotion", "émotions", "émotionnel", "coaching", "coach", "dépassement", "relation", "relations", "couple", "amour", "affective", "affectif", "vulnérabilité", "blocage", "blocages", "guérison", "thérapie", "attachement", "ego", "épanouissement"]}
+  ],
+  "projets_actifs": [
+    {"nom": "WhatsApp→N8N", "keywords": ["whatsapp", "n8n", "automation", "automatisation", "webhook", "workflow"], "poids": "fort"},
+    {"nom": "SC Rénovations", "keywords": ["btp", "devis", "obat", "chantier", "renovation", "rénovation", "batiment"], "poids": "fort"},
+    {"nom": "Agence Workflows PME/PMI", "keywords": ["workflow", "automation", "automatisation", "pme", "agence", "n8n", "make"], "poids": "fort"},
+    {"nom": "Coaching sportif / triathlon", "keywords": ["triathlon", "running", "cycling", "intervals", "garmin", "training", "ftp"], "poids": "moyen"}
+  ],
+  "outils_manquants": [
+    {"nom": "WhatsApp MCP", "keywords": ["whatsapp", "mcp", "messaging", "relay"]},
+    {"nom": "n8n MCP", "keywords": ["n8n", "mcp", "workflow", "automation"]},
+    {"nom": "Garmin MCP", "keywords": ["garmin", "mcp", "fitness", "wearable", "connect"]},
+    {"nom": "intervals.icu MCP", "keywords": ["intervals", "mcp", "training", "ctl", "atl"]},
+    {"nom": "OBAT MCP", "keywords": ["obat", "devis", "facturation", "btp"]},
+    {"nom": "Notion bridge IA", "keywords": ["notion", "bridge", "pont", "connector", "connecteur"]}
+  ],
+  "integrations_stack": {
+    "claude": [".claude/", "skill.md", "agents/", "commands/", "hooks/", ".claude-plugin/"],
+    "mcp": ["mcp", "mcp.json", "server.py", "fastmcp", "mcp-server"],
+    "n8n": ["n8n", "workflow.json", "nodes/"],
+    "monday": ["monday.com", "mondaycom", "monday-api"]
+  },
+  "themes_apprentissage": ["ia", "automatisation", "dev", "btp", "sport", "business", "trading-finance", "developpement-personnel", "mindset", "divers"]
+}

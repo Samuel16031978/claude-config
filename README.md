@@ -16,7 +16,7 @@ claude-config/
         └── <skill>/SKILL.md
 ```
 
-## Skills perso (25)
+## Skills perso (26)
 
 Source de vérité : `claude-global/skills/samuel/`. Synchronisés vers Claude Code et claude.ai par `skill-sync`.
 
@@ -59,6 +59,7 @@ Source de vérité : `claude-global/skills/samuel/`. Synchronisés vers Claude C
 | `import-devis-monday` | Import devis PDF OBAT → board Monday Chantiers |
 | `notion-protocol` | Conventions d'écriture Notion (SNAPSHOT/LOG, texte brut) |
 | `skill-sync` | La routine de parité Claude Code ↔ Claude AI |
+| `youtube-scraper` | Scrape chaînes YouTube → repos GitHub notés /100 + insights/outils |
 | `session-notion-samuel` | _(déprécié → voir `skill-sync`)_ |
 
 ## Synchroniser les skills

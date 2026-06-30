@@ -2,7 +2,15 @@
 .env.local
 .env
 
+# Cookies de session YouTube (jetons sensibles — jamais commités)
+*cookies*.txt
+claude-global/.cookies/
+
 # Bundles de skills générés par sync_skills.py (reconstructibles à la demande)
 claude-global/dist/
 __pycache__/
 *.pyc
+
+# Outputs du youtube-scraper (reconstructibles via scrape) — sauf la config AXE 4
+claude-global/data/youtube-scrapes/*.json
+!claude-global/data/youtube-scrapes/projets-samuel.json
