@@ -141,6 +141,29 @@ Mapping payload → colonnes : `chaine→Chaîne`, `url→URL chaîne`, `date_sc
 `nb_videos→Vidéos`, `nb_shorts→Shorts`, `repos_trouves→Repos trouvés`, `top_repo→Top repo`,
 `top_score→Top score`, `verdict_top→Verdict top`, `themes→Thèmes`, `top_outils→Top outils`.
 
+## Mode autonome — routines nocturnes (auto-route sans confirmation)
+
+**Autorisation durable de Samuel (2026-06-30)** : la veille→Notion route **automatiquement, sans demander
+confirmation**. Le but est de lancer des **routines nocturnes** sans Samuel dans la boucle. Le filet de
+sécurité qui rend ça sûr = **l'idempotence par URL** (§A–D dédupliquent avant de créer → re-router n'écrit
+jamais de doublon). Aucun token Notion dans le script : c'est une **session Claude Code planifiée** qui
+exécute le scrape puis le routage MCP.
+
+**Routine type (une session planifiée la lance) :**
+1. Lister les chaînes suivies = lignes de la base **Chaînes scannées** (`notion-query-data-sources` sur
+   `data_source_id`, la base récap racine). Optionnel : ajouter la file **Chaînes à explorer**
+   (`chaines_data_source_id`, `Statut = 🆕 à scraper`).
+2. Pour chaque chaîne : `scrape <url> --months 1 --refresh` (uniquement le net-nouveau) puis `report <slug> --format both`.
+3. Router les **4 destinations** (§A–D) **sans confirmation** ; l'idempotence-URL absorbe tout ce qui existe déjà.
+4. Garde-fou tokens (§B.1) : ne bloque pas, plafonne à `--max 8` et consigne l'estimation.
+5. **Récap** : en mode autonome il n'y a pas de chat → écrire un court bilan de run (chaînes balayées, créations
+   par destination, ignorés-doublons) en commentaire sur la page racine `📺 Veille YouTube (Scraper)`
+   (`notion-create-comment`) ; en session interactive, le rendre en chat (§E).
+
+> Planification : la cadence (cron/trigger nocturne) se règle côté plateforme (triggers claude.ai / Claude Code
+> on the web — cf. https://code.claude.com/docs/en/claude-code-on-the-web). Le skill ne fait que garantir que,
+> *quand* la session se lance, tout route sans intervention.
+
 ## Phase 2 — auto-routage **conscient du thème** (après chaque scrape)
 
 Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-scrapes/.notion.json`) :
@@ -162,11 +185,32 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
 Les insights ne sont PAS les extraits bruts du script (`extract_insights` = fragments keyword, fallback). **L'agent
 rédige des takeaways nets** depuis les transcriptions :
 1. `transcripts <slug> [--max N]` → JSON `{nb_videos, est_tokens_lecture, garde_fou, videos[{title, url, transcript}]}`.
-   **Vérifier `garde_fou`** : si `⚠️ volumineux` (`est_tokens_lecture > 40k`, ~15+ vidéos), prévenir Samuel et
-   proposer le **repli hybride** (ne résumer que le haut du panier) plutôt que tout lire.
+   **Toujours rapporter `est_tokens_lecture`** avant de lire. Si `garde_fou` = `⚠️ volumineux`
+   (`est_tokens_lecture > 40k`, ~15+ vidéos), c'est un **signal informatif, pas un ordre**.
+   - **En session interactive** : le dire à Samuel et **le laisser trancher** (tout lire / réduire `--max` /
+     cibler le haut du panier).
+   - **En mode autonome** (routine nocturne, pas de Samuel) : **ne jamais bloquer** — consigner l'estimation
+     dans le récap et continuer avec un **plafond par défaut `--max 8`** (les plus récentes).
+   **Ne JAMAIS basculer en hybride de soi-même** — l'option 2 (résumé intégral) reste le défaut tant que Samuel
+   ne demande pas autre chose.
 2. Pour chaque transcription, rédiger **3-5 takeaways** : phrase claire et autoportante (pas un fragment), +
-   `topic` (un domaine de `domaines_veille`) + `destination` (cultiver/process/meta-erreur/meta-bonne-pratique) +
-   `relevance` (1-10). Ignorer le bavardage/sponsor.
+   `topic` (un domaine de `domaines_veille`) + `destination` (cf. taxonomie ci-dessous) + `relevance` (1-10).
+   Ignorer le bavardage/sponsor.
+
+   **⚠️ Tagging par la VRAIE NATURE — pas de `cultiver` par défaut.** Erreur déjà commise (une session a taggé
+   *les 32 insights* `cultiver`, enterrant les méta-leçons). Chaque takeaway reçoit la destination qui décrit
+   ce qu'il fait *faire*, pas le thème :
+   | `destination` | Le takeaway… | Exemple |
+   |---|---|---|
+   | `meta-erreur` | nomme un **piège / une erreur à ne plus refaire** (agentique, technique, conduite) | « ne pas valider un livrable sans le vérifier » |
+   | `meta-bonne-pratique` | énonce une **règle/convention qui marche** à adopter | « séparer l'exécutant du juge » |
+   | `process` | décrit un **workflow/méthode reproductible** (étapes, pipeline, automatisation) | « pipeline scrape→score→route » |
+   | `cultiver` | est un **savoir de fond** sans action de process/méta directe (le **fallback**, pas le défaut) | « le jeûne module le microbiote » |
+
+   Heuristique : si la phrase contient *erreur / piège / à éviter / ne pas* → `meta-erreur` ; *toujours / convention /
+   bonne pratique / règle* → `meta-bonne-pratique` ; *étape / workflow / méthode / automatiser* → `process` ;
+   sinon seulement → `cultiver`. **Sur une chaîne tech, attends-toi à un mix** : un tagging 100 % `cultiver` est
+   presque toujours un tag paresseux à corriger.
 3. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = takeaway · `Thème` = topic ·
    `Type` = destination · `Chaîne` · `Vidéo` · `Pertinence` · `Date`. Filtrer par `Thème` pour réviser (<30 s).
 4. Les takeaways `Type ∈ {meta-*, process}` × `Thème ∈ {ia, dev, automatisation}` → candidats `lessons.md` (cf. F).

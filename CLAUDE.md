@@ -22,6 +22,11 @@
 insights, sans routage. Détail du flux : skill `youtube-scraper` (`claude-global/skills/samuel/youtube-scraper/SKILL.md`).
 Si `yt-dlp` manque : `pip install -r claude-global/requirements.txt`.
 
+> **Auto-route durable (2026-06-30)** : le routage des 4 destinations Notion se fait **automatiquement, sans
+> demander confirmation** (objectif : routines nocturnes). Filet = idempotence par URL (pas de doublon).
+> Périmètre : veille→Notion uniquement (le `push_event` intervals.icu garde sa confirmation). Voir la section
+> « Mode autonome » du skill.
+
 ## Structure du dépôt
 
 ```
