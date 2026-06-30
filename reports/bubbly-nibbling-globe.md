@@ -107,6 +107,12 @@ domaines_veille]` pour `extract_tools`.
   via MCP) pour faciliter la restructuration et contourner les barrières d'écriture MCP. → outille la Phase 2.
 - **Exploiter les agents IA de Notion** : Notion propose désormais des agents IA non exploités — évaluer leur
   usage pour le routage/automatisation de la veille (Phase 2/3) plutôt que tout faire en MCP côté script.
+- **Découverte de chaînes liées** : au `scrape`, détecter les **chaînes annexes/complémentaires** du youtubeur
+  (onglet « chaînes en vedette » via yt-dlp, liens `@handle`/`/channel/` dans la description et le « À propos »,
+  mentions orales d'une chaîne secondaire) → les sortir dans `chaines_liees` (dédupliquées, hors chaîne courante)
+  et les pousser dans une **file de découverte** (« à scraper plus tard »). Une chaîne scrapée devient une source
+  de nouvelles cibles → la veille s'auto-alimente. Faisable côté script (métadonnées chaîne déjà extraites par
+  `_extract_channel_entries`), petit ajout ; destination idéale = une vue Notion « Chaînes à explorer ».
 
 ## Vérification (Phase 1)
 
