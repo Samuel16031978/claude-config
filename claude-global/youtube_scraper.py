@@ -806,6 +806,7 @@ def cmd_scrape(args):
             "insights": extract_insights(text, topic_vocab),
             "tools": extract_tools(text, themes_surveilles),
             "description_preview": desc[:200],
+            "transcript": text,  # conservé pour la rédaction de takeaways par l'agent (option 2)
         })
         kept[fmt] += 1
 
@@ -1231,6 +1232,30 @@ def _annex_lines(doc):
     return "\n".join(out)
 
 
+def cmd_transcripts(args):
+    # Sert les transcriptions à l'agent pour qu'il rédige des takeaways nets (option 2).
+    # Le garde-fou `est_tokens_lecture` chiffre le coût avant de lancer (au-delà → repli hybride).
+    slug = args.channel if os.path.isfile(os.path.join(DATA_DIR, f"{args.channel}.json")) \
+        else _slug(args.channel)
+    doc = _read_json(os.path.join(DATA_DIR, f"{slug}.json"), None)
+    if doc is None:
+        raise SystemExit(f"❌ aucun scan pour '{args.channel}' — lance `scrape` d'abord")
+    # On ne sert que les vraies transcriptions (pas les fallback description = boilerplate marketing).
+    vids = [v for v in doc.get("videos", [])
+            if v.get("transcript") and v.get("analysis_source") == "transcription"]
+    if args.max:
+        vids = vids[: args.max]
+    est_tokens = round(sum(len(v["transcript"].split()) for v in vids) * 1.4)
+    print(json.dumps({
+        "chaine": doc.get("channel"), "slug": slug, "nb_videos": len(vids),
+        "est_tokens_lecture": est_tokens,
+        "garde_fou": "⚠️ volumineux — envisager le mode hybride" if est_tokens > 40000
+                     else "ok pour l'option 2 (résumé intégral)",
+        "videos": [{"id": v["id"], "title": v.get("title"), "url": v.get("url"),
+                    "format": v.get("format"), "transcript": v["transcript"]} for v in vids],
+    }, indent=2, ensure_ascii=False))
+
+
 def cmd_report(args):
     slug = args.channel if os.path.isfile(os.path.join(DATA_DIR, f"{args.channel}.json")) \
         else _slug(args.channel)
@@ -1288,10 +1313,15 @@ def main():
     p_report.add_argument("channel", help="slug ou nom de chaîne déjà scannée")
     p_report.add_argument("--format", choices=["md", "json", "both"], default="both")
 
+    p_transcripts = sub.add_parser("transcripts")
+    p_transcripts.add_argument("channel", help="slug ou nom de chaîne déjà scannée")
+    p_transcripts.add_argument("--max", type=int, default=0, help="limiter aux N premières")
+
     args = parser.parse_args()
     cmds = {"scrape": cmd_scrape, "status": cmd_status, "repos": cmd_repos,
             "topics": cmd_topics, "insights": cmd_insights, "tools": cmd_tools,
-            "new": cmd_new, "score": cmd_score, "report": cmd_report}
+            "new": cmd_new, "score": cmd_score, "report": cmd_report,
+            "transcripts": cmd_transcripts}
     if args.cmd not in cmds:
         parser.print_help()
         sys.exit(1)

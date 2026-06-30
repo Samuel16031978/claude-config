@@ -158,11 +158,18 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
 4. Sinon `notion-create-pages` (parent `boite_idees_data_source_id`) : `Nom du Projet`, `userDefined:URL`,
    `Potentiel` (`🔥 Élevé`/`⚡ Moyen`), **`Décision` = `À évaluer`**, `Description`, `date:Date d'ajout:start`.
 
-### B. Insights → base Apprentissage *(tous thèmes, routés par thème)*
-1. Clé `insights` (`{texte, topic, relevance, destination}`).
-2. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = texte · `Thème` = topic ·
-   `Type` = destination (cultiver/process/meta-erreur/meta-bonne-pratique) · `Chaîne` · `Vidéo` · `Pertinence` · `Date`.
-3. Filtrer par `Thème` dans Notion pour réviser un domaine (KPI PRD : retrouver un insight en <30 s).
+### B. Insights → base Apprentissage *(rédigés par l'agent — option 2)*
+Les insights ne sont PAS les extraits bruts du script (`extract_insights` = fragments keyword, fallback). **L'agent
+rédige des takeaways nets** depuis les transcriptions :
+1. `transcripts <slug> [--max N]` → JSON `{nb_videos, est_tokens_lecture, garde_fou, videos[{title, url, transcript}]}`.
+   **Vérifier `garde_fou`** : si `⚠️ volumineux` (`est_tokens_lecture > 40k`, ~15+ vidéos), prévenir Samuel et
+   proposer le **repli hybride** (ne résumer que le haut du panier) plutôt que tout lire.
+2. Pour chaque transcription, rédiger **3-5 takeaways** : phrase claire et autoportante (pas un fragment), +
+   `topic` (un domaine de `domaines_veille`) + `destination` (cultiver/process/meta-erreur/meta-bonne-pratique) +
+   `relevance` (1-10). Ignorer le bavardage/sponsor.
+3. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = takeaway · `Thème` = topic ·
+   `Type` = destination · `Chaîne` · `Vidéo` · `Pertinence` · `Date`. Filtrer par `Thème` pour réviser (<30 s).
+4. Les takeaways `Type ∈ {meta-*, process}` × `Thème ∈ {ia, dev, automatisation}` → candidats `lessons.md` (cf. F).
 
 ### C. Outils-à-installer (repos Claude) → base 🔧 Outils à installer/surveiller
 1. Clé `repos` du report → garder `verdict_outil.palier ∈ {✅ installer, 👁 surveiller}` (gate `.claude/` déjà appliqué).
