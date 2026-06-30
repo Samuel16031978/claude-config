@@ -17,7 +17,7 @@ claude-config/
         └── <skill>/SKILL.md
 ```
 
-## Skills perso (28)
+## Skills perso (29)
 
 Source canonique : **claude.ai** (Samuel y travaille et y refactore ses skills). GitHub en est le
 miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en français (juin 2026).
@@ -65,6 +65,7 @@ miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en
 | `session-notion` | Work log automatique des sessions vers Notion |
 | `skill-sync` | Routine de parité des skills via GitHub |
 | `skill-sync-notion` | Sync Notion ↔ GitHub après MAJ d'un skill (tokens en env, jamais en dur) |
+| `youtube-scraper` | Scrape chaînes YouTube → repos GitHub notés /100 + insights/outils |
 
 ## Synchroniser les skills
 
