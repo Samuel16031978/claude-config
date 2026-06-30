@@ -70,6 +70,9 @@ TOPIC_KEYWORDS = {
     "dev": ["python", "github", "api", "open", "source", "coding", "code", "docker", "react",
             "typescript", "javascript", "backend", "frontend", "framework", "library", "git",
             "deploy", "cli", "sdk", "database"],
+    "sport": ["natation", "swim", "swimming", "freestyle", "stroke", "kick", "catch", "nage",
+              "crawl", "triathlon", "running", "cycling", "pace", "technique", "endurance",
+              "training", "entrainement", "fitness", "garmin", "workout", "breathing", "recovery"],
 }
 
 # Outils/technos détectables (extensible)
@@ -77,6 +80,15 @@ TOOL_NAMES = ["n8n", "make", "zapier", "claude", "chatgpt", "gpt", "cursor", "co
               "supabase", "vercel", "langchain", "ollama", "notion", "airtable", "python",
               "react", "docker", "nextjs", "tailwind", "stripe", "firebase", "huggingface",
               "midjourney", "perplexity", "windsurf", "replit", "lovable", "bolt"]
+
+# Outils dont le nom est un mot courant : ne les compter qu'avec un contexte tech présent
+# (sinon « make » le verbe, « notion » de…, « cursor » le curseur polluent les chaînes non-tech).
+AMBIGUOUS_TOOLS = {
+    "make": ["make.com", "automation", "automatis", "n8n", "zapier", "workflow", "scenario",
+             "integromat", "no-code", "nocode", "webhook"],
+    "notion": ["notion.so", "notion ai", "workspace", "base de données", "database", "page notion"],
+    "cursor": ["cursor ai", "ide", "vscode", "vs code", "editor", "éditeur", "autocomplete", "coding"],
+}
 
 # Tournures à valeur pour booster un insight
 SIGNAL_PHRASES = ["la cle c'est", "la clé c'est", "le secret", "il faut", "j'ai appris",
@@ -227,7 +239,7 @@ def extract_insights(transcript, top_n=8):
         relevance = round(min(10, theme_hits * 2.5 + signal_bonus), 1)
         if relevance >= 6:
             topic = _dominant_topic(low)
-            if topic in ("ia", "entrepreneuriat", "mindset"):
+            if topic in ("ia", "entrepreneuriat", "mindset", "sport"):
                 candidates.append({"texte": text, "topic": topic, "relevance": relevance,
                                    "destination": tag_destination(text)})
     candidates.sort(key=lambda c: c["relevance"], reverse=True)
@@ -252,6 +264,8 @@ def extract_tools(transcript, themes_surveilles):
         freq = len(re.findall(rf"\b{re.escape(tool)}\b", low))
         if freq == 0:
             continue
+        if tool in AMBIGUOUS_TOOLS and not any(c in low for c in AMBIGUOUS_TOOLS[tool]):
+            continue  # mot courant sans contexte tech → ce n'est pas l'outil
         theme_match = 1 if tool in themes else 0
         relevance = round(min(10, freq * 2 + theme_match * 4), 1)
         out.append({"nom": tool, "freq": freq, "relevance": relevance,
@@ -1026,7 +1040,8 @@ def _fmt_date(yyyymmdd):
 
 
 # Topics vidéo (TOPIC_KEYWORDS) → thèmes d'apprentissage de Samuel (Boîte à Idées).
-TOPIC_TO_THEME = {"ia": "ia", "entrepreneuriat": "business", "mindset": "divers", "dev": "dev"}
+TOPIC_TO_THEME = {"ia": "ia", "entrepreneuriat": "business", "mindset": "divers",
+                  "dev": "dev", "sport": "sport"}
 
 
 def _verdict_idee(repo_result, citing_videos, scan_iso):
@@ -1262,10 +1277,10 @@ def main():
     p_repos.add_argument("--axe", choices=["qualite", "pertinence", "integrabilite"])
 
     p_topics = sub.add_parser("topics")
-    p_topics.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "dev"])
+    p_topics.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "dev", "sport"])
 
     p_insights = sub.add_parser("insights")
-    p_insights.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset"])
+    p_insights.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "sport"])
     p_insights.add_argument("--min-score", type=float, default=6, dest="min_score")
 
     p_tools = sub.add_parser("tools")
