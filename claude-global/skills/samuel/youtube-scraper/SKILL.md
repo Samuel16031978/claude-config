@@ -170,10 +170,16 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
 3. Sinon `notion-create-pages` (parent `outils_data_source_id`) : `Repo` · `Palier` · `Score` · `Stars` ·
    `Domaines` · `Chaîne source` · `userDefined:URL` · `Date`.
 
-### D. Rendre à Samuel le récap : idées ajoutées · insights par thème · outils à installer/surveiller · ignorés (déjà présents).
+### D. Chaînes liées → base 📡 Chaînes à explorer (file de découverte)
+1. Clé `chaines_liees` du report (`{ref, url}`).
+2. **Dédup par URL** : SQL sur `chaines_data_source_id` → skip si présent.
+3. Sinon `notion-create-pages` (parent `chaines_data_source_id`) : `Chaîne` = ref · `userDefined:URL` ·
+   `Découverte via` = chaîne courante · `Statut` = `🆕 à scraper` · `Date`.
 
-> Idempotent par URL (Boîte à Idées + Outils). Destinations restantes : 📡 Chaînes-à-explorer (`chaines_liees`) et
-> la boucle méta Phase 3 (insights `Type = meta-*`).
+### E. Rendre à Samuel le récap : idées · insights par thème · outils · chaînes à explorer · ignorés (déjà présents).
+
+> **Routage Phase 2 complet** (4 destinations, idempotentes par URL). Reste la boucle méta Phase 3
+> (exploiter les insights `Type = meta-*` → mémoire de l'agent).
 
 ## Scoring : 1 moteur, 2 verdicts (résumé — détail dans scoring-profile.md)
 
