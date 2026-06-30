@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(python3 youtube_scraper.py *)",
+      "mcp__9998ab9a-7b0b-4817-878b-367952b8f929__notion-create-pages",
+      "mcp__9998ab9a-7b0b-4817-878b-367952b8f929__notion-update-page",
+      "mcp__9998ab9a-7b0b-4817-878b-367952b8f929__notion-create-comment",
+      "mcp__9998ab9a-7b0b-4817-878b-367952b8f929__notion-query-data-sources",
+      "mcp__9998ab9a-7b0b-4817-878b-367952b8f929__notion-fetch"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
