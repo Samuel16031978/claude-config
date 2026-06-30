@@ -55,6 +55,12 @@ ce qui est solide et transposable. Un meta-* **hors-tech** (ex. erreurs fiscales
 Leçons adoptées depuis la veille :
 - **Profondeur > nouveauté** : ne pas adopter un outil/une techno par hype ; approfondir ce qu'on maîtrise
   avant de switcher (source : @ia_irl, validé). Corollaire : rester sceptique face au battage médiatique.
+- **Consensus multi-IA ≠ vérité si angle mort partagé** : faire débattre plusieurs IA aide sur les questions de
+  *jugement*, mais si les voix partagent les mêmes biais elles se valident → fausse certitude. Renforce la règle
+  `ask-panel`/Rodin : un consensus 3/4 doit être testé contre les **sources communes** (détection du faux
+  consensus), jamais pris pour argent comptant (source : @ia_irl, « 3 IA rivales »).
+- **Auto-correction = signal de confiance** : privilégier les créateurs/sources qui corrigent eux-mêmes leurs
+  chiffres trop flatteurs (ex. Ponytail : 66 % → 54 %) ; s'en méfier sinon (source : @ia_irl).
 
 ## Codes de bonne conduite
 
