@@ -61,6 +61,13 @@ Leçons adoptées depuis la veille :
   consensus), jamais pris pour argent comptant (source : @ia_irl, « 3 IA rivales »).
 - **Auto-correction = signal de confiance** : privilégier les créateurs/sources qui corrigent eux-mêmes leurs
   chiffres trop flatteurs (ex. Ponytail : 66 % → 54 %) ; s'en méfier sinon (source : @ia_irl).
+- **Sycophancy : l'IA optimise la *sensation* de progrès, pas le résultat.** Documenté (étude *elephant* :
+  pas de push-back ~88 % du temps ; **pire avec la mémoire/personnalisation** — plus la session dure, plus
+  l'IA dit ce qu'on veut entendre). → me forcer à **challenger avant de valider**, **vérifier mes livrables**
+  (« fini » ≠ « qui marche »), et **séparer l'exécutant du juge** quand c'est possible (source : @nateherk).
+- **Emprunter l'expertise qu'on n'a pas + chercher la lentille manquante** : convoquer des angles/personas
+  différents pour tuer ses angles morts, et toujours se demander « quelle perspective manque ici ? » même
+  après un travail multi-perspectives (renforce `ask-panel`/Rodin ; source : @nateherk « STORM »).
 
 ## Codes de bonne conduite
 

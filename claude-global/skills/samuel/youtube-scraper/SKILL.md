@@ -162,11 +162,28 @@ Le routage dépend de la **nature du thème** (ids + listes dans `data/youtube-s
 Les insights ne sont PAS les extraits bruts du script (`extract_insights` = fragments keyword, fallback). **L'agent
 rédige des takeaways nets** depuis les transcriptions :
 1. `transcripts <slug> [--max N]` → JSON `{nb_videos, est_tokens_lecture, garde_fou, videos[{title, url, transcript}]}`.
-   **Vérifier `garde_fou`** : si `⚠️ volumineux` (`est_tokens_lecture > 40k`, ~15+ vidéos), prévenir Samuel et
-   proposer le **repli hybride** (ne résumer que le haut du panier) plutôt que tout lire.
+   **Toujours rapporter `est_tokens_lecture` à Samuel** avant de lire. Si `garde_fou` = `⚠️ volumineux`
+   (`est_tokens_lecture > 40k`, ~15+ vidéos), c'est un **signal informatif, pas un ordre** : le dire à Samuel et
+   **le laisser trancher** (tout lire / réduire `--max` / cibler le haut du panier). **Ne JAMAIS basculer en hybride
+   de soi-même** — l'option 2 (résumé intégral) reste le défaut tant que Samuel ne demande pas autre chose.
 2. Pour chaque transcription, rédiger **3-5 takeaways** : phrase claire et autoportante (pas un fragment), +
-   `topic` (un domaine de `domaines_veille`) + `destination` (cultiver/process/meta-erreur/meta-bonne-pratique) +
-   `relevance` (1-10). Ignorer le bavardage/sponsor.
+   `topic` (un domaine de `domaines_veille`) + `destination` (cf. taxonomie ci-dessous) + `relevance` (1-10).
+   Ignorer le bavardage/sponsor.
+
+   **⚠️ Tagging par la VRAIE NATURE — pas de `cultiver` par défaut.** Erreur déjà commise (une session a taggé
+   *les 32 insights* `cultiver`, enterrant les méta-leçons). Chaque takeaway reçoit la destination qui décrit
+   ce qu'il fait *faire*, pas le thème :
+   | `destination` | Le takeaway… | Exemple |
+   |---|---|---|
+   | `meta-erreur` | nomme un **piège / une erreur à ne plus refaire** (agentique, technique, conduite) | « ne pas valider un livrable sans le vérifier » |
+   | `meta-bonne-pratique` | énonce une **règle/convention qui marche** à adopter | « séparer l'exécutant du juge » |
+   | `process` | décrit un **workflow/méthode reproductible** (étapes, pipeline, automatisation) | « pipeline scrape→score→route » |
+   | `cultiver` | est un **savoir de fond** sans action de process/méta directe (le **fallback**, pas le défaut) | « le jeûne module le microbiote » |
+
+   Heuristique : si la phrase contient *erreur / piège / à éviter / ne pas* → `meta-erreur` ; *toujours / convention /
+   bonne pratique / règle* → `meta-bonne-pratique` ; *étape / workflow / méthode / automatiser* → `process` ;
+   sinon seulement → `cultiver`. **Sur une chaîne tech, attends-toi à un mix** : un tagging 100 % `cultiver` est
+   presque toujours un tag paresseux à corriger.
 3. `notion-create-pages` (parent `apprentissage_data_source_id`) : `Insight` = takeaway · `Thème` = topic ·
    `Type` = destination · `Chaîne` · `Vidéo` · `Pertinence` · `Date`. Filtrer par `Thème` pour réviser (<30 s).
 4. Les takeaways `Type ∈ {meta-*, process}` × `Thème ∈ {ia, dev, automatisation}` → candidats `lessons.md` (cf. F).
