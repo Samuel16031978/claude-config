@@ -57,6 +57,14 @@ ce score (il vit dans le verdict Idée) → le cache `repos-scored.json` reste v
 > gardant une **note repo sobre** — c'est le découplage qui évite le biais clickbait (verdict Rodin : *À pivoter*).
 
 ## Insights & outils (pertinence légère 0-10)
-- **Insight** : densité thématique d'une fenêtre de transcription + bonus tournure à valeur. On garde
-  `relevance ≥ 6`. Chaque insight reçoit un **`destination`** (cultiver/process/meta-erreur/meta-bonne-pratique).
-- **Outil** : fréquence × match domaines. Agrégé par chaîne → stacks tendance.
+
+> **Vocabulaire unifié** : le **topic** d'un insight = un **domaine de veille** (`domaines_veille`). Récolte
+> d'insights et scoring repo partagent le même profil FR+EN → ajouter un thème/mot-clé dans `projets-samuel.json`
+> couvre **les deux**, sans patch code (fin du whack-a-mole par thème).
+
+- **Insight** : densité thématique (mots des domaines) dans une fenêtre de transcription + bonus tournure à
+  valeur. On garde `relevance ≥ 6`. Chaque insight reçoit un **`destination`** (cultiver/process/meta-erreur/
+  meta-bonne-pratique) et un **`topic`** = domaine dominant.
+- **Outil** : fréquence × match domaines ; les outils à nom de mot courant (`make`, `notion`, `cursor`) ne sont
+  comptés qu'avec un **contexte tech** (sinon faux positifs sur chaînes non-tech). Agrégé **par chaîne** (donnée
+  fraîche), pas via un global mutable.

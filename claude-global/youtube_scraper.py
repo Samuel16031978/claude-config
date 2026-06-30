@@ -57,23 +57,9 @@ GITHUB_URL_RE = re.compile(r"https?://github\.com/[\w\-.]+/[\w\-.]+")
 GITHUB_ORAL_RE = re.compile(r"github\.com/[\w\-.]+/[\w\-.]+")
 
 # Dictionnaires de topics (FR/EN) — couverture, pas titre clickbait
-TOPIC_KEYWORDS = {
-    "ia": ["ia", "ai", "intelligence", "artificielle", "llm", "chatgpt", "gpt", "claude",
-           "gemini", "prompt", "automation", "automatisation", "neural", "rag", "agent",
-           "agents", "machine", "learning", "modele", "model", "embedding", "mistral"],
-    "entrepreneuriat": ["startup", "saas", "business", "revenus", "revenue", "marketing",
-                        "freelance", "solopreneur", "entrepreneur", "entrepreneuriat", "client",
-                        "vente", "sales", "mrr", "product", "pmf", "scaling", "monetisation"],
-    "mindset": ["mindset", "productivite", "productivity", "habits", "habitudes", "discipline",
-                "deep", "work", "focus", "routine", "motivation", "developpement", "personnel",
-                "objectif", "goal", "procrastination", "energie", "mental"],
-    "dev": ["python", "github", "api", "open", "source", "coding", "code", "docker", "react",
-            "typescript", "javascript", "backend", "frontend", "framework", "library", "git",
-            "deploy", "cli", "sdk", "database"],
-    "sport": ["natation", "swim", "swimming", "freestyle", "stroke", "kick", "catch", "nage",
-              "crawl", "triathlon", "running", "cycling", "pace", "technique", "endurance",
-              "training", "entrainement", "fitness", "garmin", "workout", "breathing", "recovery"],
-}
+# Les topics des vidéos = les domaines de veille de Samuel (projets-samuel.json → domaines_veille).
+# Vocabulaire UNIFIÉ : éditer domaines_veille couvre le scoring repo ET la récolte d'insights
+# (un nouveau thème ne demande plus de patch code). Le vocab est construit puis injecté.
 
 # Outils/technos détectables (extensible)
 TOOL_NAMES = ["n8n", "make", "zapier", "claude", "chatgpt", "gpt", "cursor", "copilot",
@@ -206,8 +192,10 @@ def extract_github_links(description, transcript):
 
 # ── Extraction insights (fenêtres glissantes) ───────────────────────────────────
 
-def _dominant_topic(words):
-    scores = {t: sum(1 for w in words if w in set(kw)) for t, kw in TOPIC_KEYWORDS.items()}
+def _dominant_topic(words, vocab):
+    scores = {t: sum(1 for w in words if w in set(kw)) for t, kw in vocab.items()}
+    if not scores:
+        return None
     best = max(scores, key=scores.get)
     return best if scores[best] > 0 else None
 
@@ -224,22 +212,23 @@ def tag_destination(text):
     return "cultiver"
 
 
-def extract_insights(transcript, top_n=8):
+def extract_insights(transcript, vocab, top_n=8):
     if not transcript:
         return []
+    all_kw = set().union(*(set(kw) for kw in vocab.values())) if vocab else set()
     words = transcript.split()
     window, step = 32, 16
     candidates = []
     for i in range(0, max(1, len(words) - window + 1), step):
         chunk = words[i:i + window]
         low = [w.lower().strip(".,!?;:") for w in chunk]
-        theme_hits = sum(1 for w in low if any(w in set(kw) for kw in TOPIC_KEYWORDS.values()))
+        theme_hits = sum(1 for w in low if w in all_kw)
         text = " ".join(chunk)
         signal_bonus = 2 if any(p in text.lower() for p in SIGNAL_PHRASES) else 0
         relevance = round(min(10, theme_hits * 2.5 + signal_bonus), 1)
         if relevance >= 6:
-            topic = _dominant_topic(low)
-            if topic in ("ia", "entrepreneuriat", "mindset", "sport"):
+            topic = _dominant_topic(low, vocab)
+            if topic:
                 candidates.append({"texte": text, "topic": topic, "relevance": relevance,
                                    "destination": tag_destination(text)})
     candidates.sort(key=lambda c: c["relevance"], reverse=True)
@@ -276,13 +265,10 @@ def extract_tools(transcript, themes_surveilles):
 
 # ── Score par topic ─────────────────────────────────────────────────────────────
 
-def score_topics(transcript):
+def score_topics(transcript, vocab):
     words = set(w.lower().strip(".,!?;:") for w in (transcript or "").split())
-    result = {}
-    for topic, kw in TOPIC_KEYWORDS.items():
-        matched = len(words & set(kw))
-        result[topic] = round(min(10, (matched / len(kw)) * 25), 1)
-    return result
+    return {topic: round(min(10, (len(words & set(kw)) / len(kw)) * 25), 1)
+            for topic, kw in vocab.items() if kw}
 
 
 # ── GitHub API (avec User-Agent, token, ETag, backoff) ──────────────────────────
@@ -728,6 +714,8 @@ def cmd_scrape(args):
     run_ts = _now().isoformat()
     projets = _load_projets()
     themes_surveilles = [d["nom"] for d in projets.get("domaines_veille", [])]
+    topic_vocab = {d["nom"]: [k.lower() for k in d["keywords"]]
+                   for d in projets.get("domaines_veille", [])}
     manifest = _read_json(MANIFEST_FILE, {"videos_seen": {}, "repos_seen": {}})
     repos_scored = _read_json(REPOS_FILE, {})
     tools_index = _read_json(TOOLS_FILE, {})
@@ -814,8 +802,8 @@ def cmd_scrape(args):
             "format": fmt, "acces": "public" if is_public else "non_public",
             "analysis_source": analysis_source,
             "github_repos": [link["url"] for link in links],
-            "topics": score_topics(text),
-            "insights": extract_insights(text),
+            "topics": score_topics(text, topic_vocab),
+            "insights": extract_insights(text, topic_vocab),
             "tools": extract_tools(text, themes_surveilles),
             "description_preview": desc[:200],
         })
@@ -1039,9 +1027,8 @@ def _fmt_date(yyyymmdd):
     return f"{yyyymmdd[6:8]}/{yyyymmdd[4:6]}/{yyyymmdd[0:4]}"
 
 
-# Topics vidéo (TOPIC_KEYWORDS) → thèmes d'apprentissage de Samuel (Boîte à Idées).
-TOPIC_TO_THEME = {"ia": "ia", "entrepreneuriat": "business", "mindset": "divers",
-                  "dev": "dev", "sport": "sport"}
+# Domaines → thèmes d'apprentissage (identité, sauf mindset → divers, hors themes_apprentissage).
+TOPIC_TO_THEME = {"mindset": "divers"}
 
 
 def _verdict_idee(repo_result, citing_videos, scan_iso):
@@ -1066,8 +1053,8 @@ def _verdict_idee(repo_result, citing_videos, scan_iso):
             nouveaute = 30 if days < 1 else 20 if days < 14 else 10 if days < 60 else 5
         except ValueError:
             pass
-    theme = TOPIC_TO_THEME.get(best_topic, "divers")
-    theme_pts = 25 if best_topic in TOPIC_TO_THEME else 10
+    theme = TOPIC_TO_THEME.get(best_topic, best_topic) or "divers"
+    theme_pts = 25 if best_topic else 0
     score = round(min(100, curation + nouveaute + theme_pts))
     potentiel = "🔥" if score >= 75 else "⚡" if score >= 50 else "💡"
     return {"score": score, "potentiel": potentiel, "theme": theme,
@@ -1282,10 +1269,10 @@ def main():
     p_repos.add_argument("--axe", choices=["qualite", "pertinence", "integrabilite"])
 
     p_topics = sub.add_parser("topics")
-    p_topics.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "dev", "sport"])
+    p_topics.add_argument("--topic", help="filtre par domaine de veille (ia, sport, business…)")
 
     p_insights = sub.add_parser("insights")
-    p_insights.add_argument("--topic", choices=["ia", "entrepreneuriat", "mindset", "sport"])
+    p_insights.add_argument("--topic", help="filtre par domaine de veille (ia, sport, business…)")
     p_insights.add_argument("--min-score", type=float, default=6, dest="min_score")
 
     p_tools = sub.add_parser("tools")

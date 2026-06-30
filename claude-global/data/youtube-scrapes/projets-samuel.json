@@ -5,9 +5,10 @@
     {"nom": "automatisation", "poids": "fort", "keywords": ["n8n", "make", "zapier", "workflow", "webhook", "automation", "automatisation", "monday", "airtable", "notion", "planning", "crm"]},
     {"nom": "dev", "poids": "moyen", "keywords": ["dev", "code", "framework", "api", "typescript", "javascript", "python", "react", "devops", "sdk", "cli", "git"]},
     {"nom": "btp", "poids": "moyen", "keywords": ["btp", "construction", "renovation", "rénovation", "chantier", "devis", "obat", "batiment", "bâtiment"]},
-    {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "fitness", "garmin", "intervals", "keto", "health", "santé"]},
-    {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente"]},
-    {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]}
+    {"nom": "sport", "poids": "moyen", "keywords": ["triathlon", "running", "cycling", "training", "entrainement", "fitness", "garmin", "intervals", "keto", "health", "santé", "sommeil", "sleep", "nutrition", "alimentation", "jeûne", "fasting", "immunité", "récupération", "recovery", "microbiote", "vitamine", "natation", "swim"]},
+    {"nom": "business", "poids": "moyen", "keywords": ["saas", "startup", "marketing", "sales", "acquisition", "distribution", "growth", "pricing", "copywriting", "landing", "vente", "revenus", "revenue", "freelance", "solopreneur", "mrr", "client", "monetisation", "scaling"]},
+    {"nom": "trading-finance", "poids": "faible", "keywords": ["trading", "finance", "crypto", "bourse", "invest", "backtest", "quant", "portfolio"]},
+    {"nom": "mindset", "poids": "faible", "keywords": ["mindset", "productivité", "productivity", "habitudes", "habits", "discipline", "focus", "motivation", "objectif", "procrastination", "mental", "deep work", "routine"]}
   ],
   "projets_actifs": [
     {"nom": "WhatsApp→N8N", "keywords": ["whatsapp", "n8n", "automation", "automatisation", "webhook", "workflow"], "poids": "fort"},
