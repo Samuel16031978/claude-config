@@ -1074,9 +1074,8 @@ def _verdict_idee(repo_result, citing_videos, scan_iso):
             "raison": f"curation {round(curation)} · nouveauté {nouveaute} · thème {theme}"}
 
 
-def _build_report(slug, doc, repos_scored, tools_seen):
+def _build_report(slug, doc, repos_scored):
     videos = doc.get("videos", [])
-    vid_ids = {v["id"] for v in videos}
 
     # Repos cités dans la chaîne, joints aux scores (un repo cité mais non noté reste listé).
     repo_urls = []
@@ -1112,9 +1111,15 @@ def _build_report(slug, doc, repos_scored, tools_seen):
             theme_sum[t] = theme_sum.get(t, 0) + sc
     themes = [t for t in sorted(theme_sum, key=theme_sum.get, reverse=True) if theme_sum[t] >= 5]
 
-    outils = [{"nom": k, "relevance": m["relevance_cumulee"], "mentions": m["mentions_total"]}
-              for k, m in tools_seen.items() if set(m.get("videos", [])) & vid_ids]
-    outils.sort(key=lambda x: x["relevance"], reverse=True)
+    # Agrégé depuis les vidéos de CETTE chaîne (donnée fraîche) — pas depuis le global
+    # tools-seen.json (append-only) qui retiendrait des détections périmées après un --refresh.
+    tool_agg = {}
+    for v in videos:
+        for t in v.get("tools", []):
+            a = tool_agg.setdefault(t["nom"], {"nom": t["nom"], "mentions": 0, "relevance": 0})
+            a["mentions"] += t.get("freq", 0)
+            a["relevance"] = max(a["relevance"], t.get("relevance", 0))
+    outils = sorted(tool_agg.values(), key=lambda x: x["relevance"], reverse=True)
 
     seen, insights = set(), []
     for v in videos:
@@ -1246,7 +1251,7 @@ def cmd_report(args):
     doc = _read_json(path, None)
     if doc is None:
         raise SystemExit(f"❌ aucun scan pour '{args.channel}' ({path} introuvable) — lance `scrape` d'abord")
-    rep = _build_report(slug, doc, _read_json(REPOS_FILE, {}), _read_json(TOOLS_FILE, {}))
+    rep = _build_report(slug, doc, _read_json(REPOS_FILE, {}))
     markdown = _fiche_markdown(rep) + "\n" + _annex_lines(doc)
     if args.format == "md":
         print(markdown)
