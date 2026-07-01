@@ -67,6 +67,14 @@ miroir versionné, qui alimente Claude Code. Noms majoritairement refactorés en
 | `skill-sync-notion` | Sync Notion ↔ GitHub après MAJ d'un skill (tokens en env, jamais en dur) |
 | `youtube-scraper` | Scrape chaînes YouTube → repos GitHub notés /100 + insights/outils |
 
+## Rapports
+
+| Rapport | Objet |
+|---------|-------|
+| [`skills-directory-audit-2026-07-01`](reports/skills-directory-audit-2026-07-01.md) | Audit de parité repo ↔ `~/.claude/skills/` (install à plat, reliquat `Samuel/`, manifeste) |
+
+D'autres rapports (veille, missions ponctuelles) sont archivés dans [`reports/`](reports/).
+
 ## Synchroniser les skills
 
 ```bash
